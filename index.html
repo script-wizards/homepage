@@ -1,205 +1,206 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Script Wizards</title>
-    <meta name="description" content="OSR Software Wizardry">
+    <meta name="description" content="OSR Software Wizardry" />
     <style>
-        :root {
-            --text-color: #ece3d0;
-            --bg-color: #111111;
-            --accent-color: #ffa227;
-            --link-hover: #111111;
-        }
+      :root {
+        --text-color: #ece3d0;
+        --bg-color: #111111;
+        --accent-color: #ffa227;
+        --link-hover: #111111;
+      }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
 
-        body {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            color: var(--text-color);
-            background-color: var(--bg-color);
-            font-family: "Courier New", Courier, monospace;
-            line-height: 1.1;
-            text-shadow: 0 0 5px var(--text-color);
-        }
+      body {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        color: var(--text-color);
+        background-color: var(--bg-color);
+        font-family: "Courier New", Courier, monospace;
+        line-height: 1.1;
+        text-shadow: 0 0 5px var(--text-color);
+      }
 
+      .container {
+        width: 100%;
+        margin: 0;
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .ascii-art {
+        font-size: clamp(0.4rem, 1.2vw, 0.8rem);
+        max-width: 600px;
+        height: auto;
+        overflow-x: hidden;
+        white-space: pre;
+        text-align: left;
+        position: relative;
+      }
+
+      .pfetch {
+        line-height: 1;
+        margin-bottom: 0.5rem;
+      }
+
+      .pfetch .info-label,
+      .pfetch .info-value {
+        line-height: 1;
+      }
+
+      .terminal-output {
+        width: 100%;
+        max-width: 600px;
+        margin: 0;
+        font-size: 0.9em;
+        color: var(--text-color);
+        opacity: 0.9;
+        padding: 1rem;
+        white-space: pre-wrap;
+        overflow-wrap: break-word;
+        line-height: 1.5;
+        font-family: "Courier New", Courier, monospace;
+        letter-spacing: -0.5px;
+      }
+
+      .terminal-output a {
+        line-height: 1.5;
+        display: inline-block;
+        padding: 0 0.5rem 0 0.5rem;
+      }
+
+      .prompt,
+      .info-label {
+        color: var(--text-color);
+        opacity: 0.7;
+      }
+
+      .command {
+        color: var(--accent-color);
+        opacity: 0;
+      }
+
+      .info-value {
+        color: var(--accent-color);
+        padding-left: 1ch;
+      }
+
+      main {
+        flex: 1;
+        position: relative;
+      }
+
+      main::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: repeating-linear-gradient(
+          0deg,
+          rgba(255, 162, 39, 0.03),
+          rgba(255, 162, 39, 0.03) 1px,
+          transparent 1px,
+          transparent 2px
+        );
+        pointer-events: none;
+      }
+
+      .links {
+        width: 100%;
+        margin: 2rem 0;
+        display: flex;
+        gap: 1.5rem;
+        flex-wrap: wrap;
+      }
+
+      a {
+        color: var(--accent-color);
+        text-decoration: none;
+        padding: 0.5rem 1rem;
+        text-transform: uppercase;
+        position: relative;
+        display: inline-block;
+        opacity: 0.9;
+        transition: background-color 0.2s ease, padding-left 0.15s ease-out;
+      }
+
+      a:hover {
+        background-color: var(--accent-color);
+        color: var(--link-hover);
+        text-shadow: none;
+        padding-left: 2rem;
+        opacity: 1;
+      }
+
+      a:hover::before {
+        content: ">";
+        position: absolute;
+        left: 0.5rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--link-hover);
+      }
+
+      .copyright {
+        font-size: 0.8rem;
+        opacity: 0.6;
+        margin-top: 2rem;
+      }
+
+      @media (max-width: 600px) {
         .container {
-            width: 100%;
-            margin: 0;
-            padding: 1rem;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+          padding: 0.5rem;
+          align-items: flex-start;
         }
 
         .ascii-art {
-            font-size: clamp(0.4rem, 1.2vw, 0.8rem);
-            max-width: 600px;
-            height: auto;
-            overflow-x: hidden;
-            white-space: pre;
-            text-align: left;
-            position: relative;
-        }
-
-        .pfetch {
-            line-height: 1;
-            margin-bottom: 0.5rem;
-            }
-
-        .pfetch .info-label,
-        .pfetch .info-value {
-            line-height: 1;
+          font-size: clamp(0.1rem, 1.2vw, 0.8rem);
+          max-width: 100%;
+          text-align: left;
+          margin-left: 0;
         }
 
         .terminal-output {
-            width: 100%;
-            max-width: 600px;
-            margin: 0;
-            font-size: 0.9em;
-            color: var(--text-color);
-            opacity: 0.9;
-            padding: 1rem;
-            white-space: pre-wrap;
-            overflow-wrap: break-word;
-            line-height: 1.5;
-            font-family: "Courier New", Courier, monospace;
-            letter-spacing: -0.5px;
-        }
-
-        .terminal-output a {
-            line-height: 1.5;
-            display: inline-block;
-            padding: 0 0.5rem 0 0.5rem;
-        }
-
-        .prompt, .info-label {
-            color: var(--text-color);
-            opacity: 0.7;
-        }
-
-        .command {
-            color: var(--accent-color);
-            opacity: 0;
-        }
-
-        .info-value {
-            color: var(--accent-color);
-            padding-left: 1ch;
-        }
-
-        main {
-            flex: 1;
-            position: relative;
-        }
-
-        main::before {
-            content: "";
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: repeating-linear-gradient(
-                0deg,
-                rgba(255, 162, 39, 0.03),
-                rgba(255, 162, 39, 0.03) 1px,
-                transparent 1px,
-                transparent 2px
-            );
-            pointer-events: none;
+          font-size: 0.8em;
+          padding: 0.5rem;
+          width: 100%;
+          max-width: 100%;
+          overflow-x: auto;
         }
 
         .links {
-            width: 100%;
-            margin: 2rem 0;
-            display: flex;
-            gap: 1.5rem;
-            flex-wrap: wrap;
+          gap: 0.75rem;
         }
 
         a {
-            color: var(--accent-color);
-            text-decoration: none;
-            padding: 0.5rem 1rem;
-            text-transform: uppercase;
-            position: relative;
-            display: inline-block;
-            opacity: 0.9;
-            transition: background-color 0.2s ease,
-                        padding-left 0.15s ease-out;
+          padding: 0.25rem 0.5rem;
+          font-size: 0.8rem;
         }
 
         a:hover {
-            background-color: var(--accent-color);
-            color: var(--link-hover);
-            text-shadow: none;
-            padding-left: 2rem;
-            opacity: 1;
+          padding-left: 1.5rem;
         }
-
-        a:hover::before {
-            content: ">";
-            position: absolute;
-            left: 0.5rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--link-hover);
-        }
-
-        .copyright {
-            font-size: 0.8rem;
-            opacity: 0.6;
-            margin-top: 2rem;
-        }
-
-        @media (max-width: 600px) {
-            .container {
-                padding: 0.5rem;
-                align-items: flex-start;
-            }
-
-            .ascii-art {
-                font-size: clamp(0.1rem, 1.2vw, 0.8rem);
-                max-width: 100%;
-                text-align: left;
-                margin-left: 0;
-            }
-
-            .terminal-output {
-                font-size: 0.8em;
-                padding: 0.5rem;
-                width: 100%;
-                max-width: 100%;
-                overflow-x: auto;
-            }
-
-            .links {
-                gap: 0.75rem;
-            }
-
-            a {
-                padding: 0.25rem 0.5rem;
-                font-size: 0.8rem;
-            }
-
-            a:hover {
-                padding-left: 1.5rem;
-            }
-        }
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <main>
-        <div class="container">
-            <pre class="ascii-art">    █████████     █████████   ███████████    █████  ███████████  ███████████
+      <div class="container">
+        <pre class="ascii-art">
+    █████████     █████████   ███████████    █████  ███████████  ███████████
    ███░░░░░███   ███░░░░░███ ░░███░░░░░███  ░░███  ░░███░░░░░███░█░░░███░░░█
   ░███    ░░░   ███     ░░░   ░███    ░███   ░███   ░███    ░███░   ░███  ░
   ░░█████████  ░███           ░██████████    ░███   ░██████████     ░███
@@ -214,8 +215,9 @@
 ███     ███ ███▌   ▄███▀   ▀ ▀███████████ ▀▀███▀▀▀▀▀   ███    ███ ▀███████████
 ███     ███ ███  ▄███▀         ███    ███ ▀███████████ ███    ███          ███
 ███ ▄█▄ ███ ███  ███▄     ▄█   ███    ███   ███    ███ ███   ▄███    ▄█    ███
- ▀███▀███▀  █▀    ▀████████▀   ███    █▀    ███    ███ ████████▀   ▄████████▀</pre>
-<pre class="terminal-output">
+ ▀███▀███▀  █▀    ▀████████▀   ███    █▀    ███    ███ ████████▀   ▄████████▀</pre
+        >
+        <pre class="terminal-output">
 <div class="pfetch"><span class="prompt">~/spells $</span> <span class="command">pfetch</span>
 
       /\\        <span class="info-label">merlin</span>@<span class="info-label">scriptwizards</span>
@@ -241,8 +243,8 @@ insta  <a href="https://www.instagram.com/scriptwizards/">instagram.com/scriptwi
 github <a href="https://github.com/script-wizards">github.com/script-wizards</a>
 contact<a href="mailto:hello@scriptwizards.org">hello[at]scriptwizards.org</a>
 </pre>
-            <div class="copyright">© SCRIPT WIZARDS</div>
-        </div>
+        <div class="copyright">© SCRIPT WIZARDS</div>
+      </div>
     </main>
-</body>
+  </body>
 </html>
