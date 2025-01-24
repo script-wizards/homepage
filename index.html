@@ -26,15 +26,14 @@
             color: var(--text-color);
             background-color: var(--bg-color);
             font-family: "Courier New", Courier, monospace;
-            line-height: 1.5;
+            line-height: 1.1;
             text-shadow: 0 0 5px var(--text-color);
         }
 
         .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem;
             width: 100%;
+            margin: 0;
+            padding: 1rem;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -43,28 +42,42 @@
         .ascii-art {
             font-size: clamp(0.4rem, 1.2vw, 0.8rem);
             max-width: 600px;
+            height: auto;
             overflow-x: hidden;
             white-space: pre;
-            margin-bottom: 2rem;
             text-align: left;
             position: relative;
+        }
+
+        .pfetch {
+            line-height: 1;
+            margin-bottom: 0.5rem;
+            }
+
+        .pfetch .info-label,
+        .pfetch .info-value {
+            line-height: 1;
         }
 
         .terminal-output {
             width: 100%;
             max-width: 600px;
-            margin: 0 0 2rem;
+            margin: 0;
             font-size: 0.9em;
             color: var(--text-color);
             opacity: 0.9;
             padding: 1rem;
             white-space: pre-wrap;
             overflow-wrap: break-word;
+            line-height: 1.5;
+            font-family: "Courier New", Courier, monospace;
+            letter-spacing: -0.5px;
         }
 
-        .terminal-output, .content p, .projects p {
-          font-family: "Courier New", Courier, monospace;
-          letter-spacing: -0.5px;
+        .terminal-output a {
+            line-height: 1.5;
+            display: inline-block;
+            padding: 0 0.5rem 0 0.5rem;
         }
 
         .prompt, .info-label {
@@ -74,6 +87,7 @@
 
         .command {
             color: var(--accent-color);
+            opacity: 0;
         }
 
         .info-value {
@@ -103,25 +117,12 @@
             pointer-events: none;
         }
 
-        .content, .projects {
-            width: 100%;
-            max-width: 600px;
-            text-align: left;
-            margin: 1rem 0;
-            opacity: 0.9;
-            font-size: 0.9em;
-        }
-
-        .content p, .projects p {
-            margin: 0.5rem 0;
-        }
-
         .links {
+            width: 100%;
             margin: 2rem 0;
             display: flex;
             gap: 1.5rem;
             flex-wrap: wrap;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
         }
 
         a {
@@ -129,10 +130,11 @@
             text-decoration: none;
             padding: 0.5rem 1rem;
             text-transform: uppercase;
-            transition: all 0.2s ease;
             position: relative;
             display: inline-block;
             opacity: 0.9;
+            transition: background-color 0.2s ease,
+                        padding-left 0.15s ease-out;
         }
 
         a:hover {
@@ -161,18 +163,22 @@
         @media (max-width: 600px) {
             .container {
                 padding: 0.5rem;
-            }
-
-            .terminal-output {
-                font-size: 0.8em;
-                padding: 0.5rem;
-                max-width: calc(100vw - 1rem);
-                overflow-x: auto;
+                align-items: flex-start;
             }
 
             .ascii-art {
                 font-size: clamp(0.1rem, 1.2vw, 0.8rem);
                 max-width: 100%;
+                text-align: left;
+                margin-left: 0;
+            }
+
+            .terminal-output {
+                font-size: 0.8em;
+                padding: 0.5rem;
+                width: 100%;
+                max-width: 100%;
+                overflow-x: auto;
             }
 
             .links {
@@ -210,7 +216,8 @@
 ███ ▄█▄ ███ ███  ███▄     ▄█   ███    ███   ███    ███ ███   ▄███    ▄█    ███
  ▀███▀███▀  █▀    ▀████████▀   ███    █▀    ███    ███ ████████▀   ▄████████▀</pre>
 <pre class="terminal-output">
-<span class="prompt">~/spells $</span> <span class="command">pfetch</span>
+<div class="pfetch"><span class="prompt">~/spells $</span> <span class="command">pfetch</span>
+
       /\\        <span class="info-label">merlin</span>@<span class="info-label">scriptwizards</span>
      /  \\       <span class="info-label">os</span>     <span class="info-value">Archmage Linux</span>
     /\\  \\      <span class="info-label">kernel</span> <span class="info-value">5.2.21-arch-mage1</span>
@@ -218,8 +225,7 @@
   /   ,,   \\    <span class="info-label">pkgs</span>   <span class="info-value">147 (spells)</span>
  /   |  |  -\\   <span class="info-label">shell</span>  <span class="info-value">rune 3.2.1</span>
 /_-''    ''-_\\  <span class="info-label">memory</span> <span class="info-value">28.4G / 32.0G</span>
-
-<span class="prompt">~/spells $</span> <span class="command">about</span>
+</div><span class="prompt">~/spells $</span> <span class="command">about</span>
 Script Wizards is a TTRPG and software studio
 The first issue launched on <a href="https://www.kickstarter.com/projects/script-wizards/script-wizards-rpg-zine-for-hackers?ref=5r2ytm">Kickstarter</a>
 Buy it on our <a href="https://store.scriptwizards.org">store</a> or <a href="https://scriptwizards.itch.io/issue-1">itch.io</a>
