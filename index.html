@@ -1,71 +1,183 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Script Wizards</title>
-    <link
-      rel="icon"
-      type="image/png"
-      href="https://cdn.statically.io/gh/script-wizards/homepage/main/favicon.png"
-    />
-    <meta name="description" content="OSR RPG Zine for Hackers" />
+    <meta name="description" content="OSR Software Wizardry">
     <style>
-      body {
-        color: #ece3d0;
-        background-color: #212121;
-        max-width: 500px;
-        margin: auto;
-        font-family: monospace;
-      }
-      p {
-        word-break: break-word;
-        margin: 10 auto;
-      }
-      pre {
-        margin: 0;
-      }
-      a:link {
-        color: #ffa227;
-        background-color: transparent;
-        text-decoration: none;
-      }
-      a:visited {
-        color: #ffa227;
-        background-color: transparent;
-        text-decoration: none;
-      }
-      a:hover {
-        color: #ffa227;
-        background-color: transparent;
-        text-decoration: underline;
-      }
-      a:active {
-        color: #ffa227;
-        background-color: transparent;
-        text-decoration: underline;
-      }
-      footer {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        text-align: center;
-        color: #ece3d0;
-        background-color: #212121;
-        padding: 10px;
-      }
+        :root {
+            --text-color: #ffa227;
+            --bg-color: #000000;
+            --accent-color: #ffa227;
+            --link-hover: #000000;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            font-family: "Courier New", Courier, monospace;
+            line-height: 1.5;
+            text-shadow: 0 0 5px var(--text-color);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .ascii-art {
+            font-size: clamp(0.5rem, 1.5vw, 1rem);
+            white-space: pre;
+            margin-bottom: 2rem;
+            text-align: left;
+            position: relative;
+        }
+
+        .terminal-output {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 0 2rem;
+            font-size: 0.9em;
+            color: var(--text-color);
+            opacity: 0.9;
+            padding: 1rem;
+        }
+
+        .terminal-output, .content p, .projects p {
+          font-family: "Courier New", Courier, monospace;
+          letter-spacing: -0.5px;
+        }
+
+        .prompt, .info-label {
+            color: var(--text-color);
+            opacity: 0.7;
+        }
+
+        .command {
+            color: var(--accent-color);
+        }
+
+        .info-value {
+            color: var(--accent-color);
+            padding-left: 1ch;
+        }
+
+        main {
+            flex: 1;
+            position: relative;
+        }
+
+        main::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(255, 162, 39, 0.03),
+                rgba(255, 162, 39, 0.03) 1px,
+                transparent 1px,
+                transparent 2px
+            );
+            pointer-events: none;
+        }
+
+        .content, .projects {
+            width: 100%;
+            max-width: 600px;
+            text-align: left;
+            margin: 1rem 0;
+            opacity: 0.9;
+            font-size: 0.9em;
+        }
+
+        .content p, .projects p {
+            margin: 0.5rem 0;
+        }
+
+        .links {
+            margin: 2rem 0;
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        }
+
+        a {
+            color: var(--accent-color);
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            text-transform: uppercase;
+            transition: all 0.2s ease;
+            position: relative;
+            display: inline-block;
+            opacity: 0.9;
+        }
+
+        a:hover {
+            background-color: var(--accent-color);
+            color: var(--link-hover);
+            text-shadow: none;
+            padding-left: 2rem;
+            opacity: 1;
+        }
+
+        a:hover::before {
+            content: ">";
+            position: absolute;
+            left: 0.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--link-hover);
+        }
+
+        .copyright {
+            font-size: 0.8rem;
+            opacity: 0.6;
+            margin-top: 2rem;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .links {
+                gap: 0.75rem;
+            }
+
+            a {
+                padding: 0.25rem 0.5rem;
+                font-size: 0.9rem;
+            }
+
+            a:hover {
+                padding-left: 1.5rem;
+            }
+        }
     </style>
-  </head>
-  <body>
-    <table width="75%" align="center">
-      <tr>
-        <td>
-          <div>
-            <br />
-            <pre style="font-size: min(1.5vw, 75%)">
-    █████████     █████████   ███████████    █████  ███████████  ███████████
+</head>
+<body>
+    <main>
+        <div class="container">
+            <pre class="ascii-art">    █████████     █████████   ███████████    █████  ███████████  ███████████
    ███░░░░░███   ███░░░░░███ ░░███░░░░░███  ░░███  ░░███░░░░░███░█░░░███░░░█
   ░███    ░░░   ███     ░░░   ░███    ░███   ░███   ░███    ░███░   ░███  ░
   ░░█████████  ░███           ░██████████    ░███   ░██████████     ░███
@@ -80,56 +192,36 @@
 ███     ███ ███▌   ▄███▀   ▀ ▀███████████ ▀▀███▀▀▀▀▀   ███    ███ ▀███████████
 ███     ███ ███  ▄███▀         ███    ███ ▀███████████ ███    ███          ███
 ███ ▄█▄ ███ ███  ███▄     ▄█   ███    ███   ███    ███ ███   ▄███    ▄█    ███
- ▀███▀███▀  █▀    ▀████████▀   ███    █▀    ███    ███ ████████▀   ▄████████▀
-         s c r i p t w i z a r d s . o r g  ███    ███ RPG ZINE FOR HACKERS
-</pre
-            >
-          </div>
-          <div>
-            <p>
-              Script Wizards is an old-school RPG zine and open-source software
-              organization.
-            </p>
-            <p>
-              The first issue launched on
-              <a
-                href="https://www.kickstarter.com/projects/script-wizards/script-wizards-rpg-zine-for-hackers?ref=5r2ytm"
-              >
-                Kickstarter ZineQuest 2023</a
-              >.
-              You can pre-order the zine on our <a href="https://store.scriptwizards.org/">store</a> or on <a href="https://scriptwizards.itch.io/issue-1">itch.io</a>.
-            </p>
-            <pre>
-▬▬ι═ Inside Issue 1 ══════════════════ﺤ
+ ▀███▀███▀  █▀    ▀████████▀   ███    █▀    ███    ███ ████████▀   ▄████████▀</pre>
+<pre class="terminal-output">
+<span class="prompt">~/spellbook $</span> <span class="command">pfetch</span>
 
-  Notetaking tools for RPGs
-  Lazy DM's guide to ChatGPT
-  Run an Open Table on Discord
-  Featured open-source RPG projects
-  Scripts & tools for DMs & players
-  Senior Software Engineer monster
-  Dungeon design for hackers
-  and more…
+      /\\                    <span class="info-value">merlin@scriptwizards</span>
+     /  \\                    <span class="info-label">os</span>     <span class="info-value">Archmage Linux x86_64</span>
+    /\\  \\                   <span class="info-label">kernel</span> <span class="info-value">5.2.21-arch-mage1</span>
+   /      \\                  <span class="info-label">uptime</span> <span class="info-value">7 moons, 3 days</span>
+  /   ,,   \\                 <span class="info-label">packages</span> <span class="info-value">147 (spells)</span>
+ /   |  |  -\\                <span class="info-label">shell</span>  <span class="info-value">runecraft 3.2.1</span>
+/_-''    ''-_\\               <span class="info-label">memory</span> <span class="info-value">28.4G / 32.0G</span>
 
-▬▬ι═ Projects ════════════════════════ﺤ
-
-  <a href="https://scriptwizards.itch.io/oracle">oracle</a> - random table roller
-  <a href="https://chargen.scriptwizards.org/">chargen</a> - OSE character generator
-  <a href="https://chargen.scriptwizards.org/cairn">chargen/cairn</a> - Cairn 2e generator
-  <a href="https://roller.scriptwizards.org/">roller</a> - dice roller and API
-
-            </pre>
-          </div>
-        </td>
-      </tr>
-    </table>
-  </body>
-  <footer>
-    <a href="https://store.scriptwizards.org/">store</a>
-    <a href="https://www.instagram.com/scriptwizards/">instagram</a>
-    <a href="https://scriptwizards.itch.io/">itch.io</a>
-    <a href="https://github.com/script-wizards">github</a>
-    <a href="mailto:hello@scriptwizards.org">contact</a></br>
-    Copyright © 2023 Script Wizards
-  </footer>
+<span class="prompt">~/spellbook $</span> <span class="command">about</span>
+Script Wizards is a TTRPG and software studio
+The first issue launched on <a href="https://www.kickstarter.com/projects/script-wizards/script-wizards-rpg-zine-for-hackers?ref=5r2ytm">Kickstarter ZineQuest 2023</a>
+You can order the zine on our <a href="https://store.scriptwizards.org">store</a> or <a href="https://scriptwizards.itch.io/issue-1">itch.io</a>
+Check out our bookstore <a href="https://dungeonbooks.com">Dungeon Books</a>
+<span class="prompt">~/spellbook $</span> <span class="command">projects</span>
+<span class="info-label">oracle</span>     <a href="https://scriptwizards.itch.io/oracle">random table roller</a>
+<span class="info-label">chargen</span>    <a href="https://chargen.scriptwizards.org/">OSE character generator</a>
+<span class="info-label">cairn</span>      <a href="https://chargen.scriptwizards.org/cairn">Cairn 2e generator</a>
+<span class="info-label">roller</span>     <a href="https://roller.scriptwizards.org/">dice roller and API</a>
+<span class="prompt">~/spellbook $</span> <span class="command">links</span>
+<span class="info-label">store</span>      <a href="https://store.scriptwizards.org/">store.scriptwizards.org</a>
+<span class="info-label">instagram</span>  <a href="https://www.instagram.com/scriptwizards/">instagram.com/scriptwizards/</a>
+<span class="info-label">github</span>     <a href="https://github.com/script-wizards">github.com/script-wizards</a>
+<span class="info-label">contact</span>    <a href="mailto:hello@scriptwizards.org">hello[at]scriptwizards.org</a>
+</pre>
+            <div class="copyright">© SCRIPT WIZARDS</div>
+        </div>
+    </main>
+</body>
 </html>
