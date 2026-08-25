@@ -4,248 +4,1057 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Script Wizards</title>
-    <meta name="description" content="OSR Software Wizardry" />
-    <link rel="icon" type="image/png" href="favicon.png" />
+    <meta name="description" content="A TTRPG and software studio. Small tools for running games, and a zine for hackers who play them." />
+    <meta name="theme-color" content="#111111" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="canonical" href="https://scriptwizards.org/" />
+    <link rel="preload" as="font" type="font/woff2" href="/unifont-subset.woff2" crossorigin />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Script Wizards" />
+    <meta property="og:title" content="Script Wizards" />
+    <meta property="og:description" content="A TTRPG and software studio. Small tools for running games, and a zine for hackers who play them." />
+    <meta property="og:url" content="https://scriptwizards.org/" />
+    <meta property="og:image" content="https://scriptwizards.org/favicon.png" />
+    <meta name="twitter:card" content="summary" />
+
     <style>
-      :root {
-        --text-color: #ece3d0;
-        --bg-color: #111111;
-        --accent-color: #ffa227;
-        --link-hover: #111111;
+      /* GNU Unifont (dual GPLv2+fontex/OFL), subset to Latin-1, the box
+         drawing and block ranges, and the prompt chevron. */
+      @font-face {
+        font-family: "unifont";
+        src: url("/unifont-subset.woff2") format("woff2");
+        font-display: block;
       }
 
-      * {
-        margin: 0;
-        padding: 0;
+      :root {
+        --bg: #111111;
+        --ink: #ffffff;
+/* No grey text anywhere. Thin mid-grey strokes are what pick up the
+           green and pink subpixel fringing; white at 16px with no shadow is
+           what the zine edition does and it renders clean. Hierarchy comes
+           from the accent instead. Grey survives only in borders. */
+        --dim: #ffffff;
+        --muted: #ffffff;
+        --frame: #3d3d3d;
+        --accent: #ffa227;
+
+        /* the prompt segment takes the same orange as the links */
+        --pl-user-bg: #303030;
+        --pl-user-fg: #ffffff;
+        --pl-dir-bg: #ffa227;
+        --pl-dir-fg: #1c1b19;
+
+        --col: 42rem;
+        --gap: 1.125rem;
+        --ease: cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      /* cast light */
+      [data-theme="light"] {
+        --bg: #ececec;
+        --ink: #1a1a1a;
+        --dim: #3f3f3f;
+        --muted: #656565;
+        --frame: #c4c4c4;
+        --accent: #2c2c2c;
+        --pl-user-bg: #d5d5d5;
+        --pl-user-fg: #3f3f3f;
+        --pl-dir-bg: #ffa227;
+        --pl-dir-fg: #1c1b19;
+      }
+
+      [data-theme="light"] a {
+        text-decoration: underline;
+      }
+
+      *,
+      *::before,
+      *::after {
         box-sizing: border-box;
       }
 
+      html {
+        background-color: var(--bg);
+        scroll-behavior: smooth;
+      }
+
       body {
-        min-height: 100vh;
-        display: flex;
-        flex-direction: column;
-        color: var(--text-color);
-        background-color: var(--bg-color);
-        font-family: "Courier New", Courier, monospace;
-        line-height: 1.1;
-        text-shadow: 0 0 5px var(--text-color);
-      }
-
-      .container {
-        width: 100%;
         margin: 0;
-        padding: 1rem;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
+        padding: 1.5rem 1rem 2rem;
+        background-color: var(--bg);
+        color: var(--ink);
+        font-family: "unifont", ui-monospace, "DejaVu Sans Mono", "Courier New", monospace;
+        font-size: 16px;
+        /* Unifont is a 16px bitmap face. It only renders cleanly when every
+           line box lands on a whole pixel, which is what the zine edition does
+           with 16px/1.0. Keep every vertical step here a multiple of 4px:
+           16 x 1.25 = 20px exactly. Fractional line boxes are what put the
+           pink and green fringes on the block glyphs. */
+        line-height: 1.125;
+        -webkit-text-size-adjust: 100%;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        transition: background-color 0.35s var(--ease), color 0.35s var(--ease);
       }
 
-      .ascii-art {
-        font-size: clamp(0.4rem, 1.2vw, 0.8rem);
-        max-width: 600px;
+      ::selection {
+        background-color: var(--accent);
+        color: var(--bg);
+      }
+
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      @media (max-width: 34rem) {
+        body {
+          padding: 1.25rem 1rem 1.5rem;
+        }
+      }
+
+      /* Auto margins centre the column on a HALF pixel whenever the leftover
+         space is odd, and that half pixel changes every time the window
+         resizes. Unifont's stems are one pixel wide, so a half-pixel offset
+         gets resampled across the LCD's red/green/blue stripes and the text
+         picks up a colour fringe that swings green to magenta as you drag.
+         Snapping the offset to a whole pixel removes the resampling, so the
+         glyphs land on the grid and no antialiasing runs at all. */
+      .shell {
+        width: min(100%, var(--col));
+        margin-inline: auto;
+      }
+
+      @supports (margin-left: round(down, 1px, 1px)) {
+        .shell {
+          margin-inline: round(down, (100% - min(100%, var(--col))) / 2, 1px) auto;
+        }
+      }
+
+      /* ---- masthead ---------------------------------------------------- */
+
+      h1 {
+        margin: 0 0 0.5rem;
+        font-size: inherit;
+        font-weight: normal;
+      }
+
+      .masthead {
+        display: block;
+        width: min(100%, 30rem);
         height: auto;
-        overflow-x: hidden;
-        white-space: pre;
-        text-align: left;
-        position: relative;
+        color: var(--ink);
       }
 
-      .pfetch {
-        line-height: 1;
-        margin-bottom: 0.5rem;
+      .tagline {
+        margin: 0 0 var(--gap);
+        color: var(--muted);
       }
 
-      .pfetch .info-label,
-      .pfetch .info-value {
-        line-height: 1;
+      /* ---- scrollback -------------------------------------------------- */
+
+      .block {
+        margin: 0 0 var(--gap);
       }
 
-      .terminal-output {
-        width: 100%;
-        max-width: 600px;
+      /* p10k collapses a finished prompt to the chevron and the command it
+         ran. Same here, so the rail only ever lives at the live prompt. */
+      .cmd {
         margin: 0;
-        font-size: 0.9em;
-        color: var(--text-color);
-        opacity: 0.9;
-        padding: 1rem;
+        color: var(--accent);
+      }
+
+      .out {
+        margin: 0;
+        max-width: 72ch;
         white-space: pre-wrap;
         overflow-wrap: break-word;
-        line-height: 1.5;
-        font-family: "Courier New", Courier, monospace;
-        letter-spacing: -0.5px;
       }
 
-      .terminal-output a {
-        line-height: 1.5;
-        display: inline-block;
-        padding: 0 0.5rem 0 0.5rem;
+      .out .label {
+        color: var(--accent);
       }
 
-      .prompt,
-      .info-label {
-        color: var(--text-color);
-        opacity: 0.7;
+      .out .bright {
+        color: var(--ink);
       }
 
-      .command {
-        color: var(--accent-color);
+      .out .hit {
+        color: var(--accent);
       }
 
-      .info-value {
-        color: var(--accent-color);
-        padding-left: 1ch;
+      .out .quiet {
+        color: var(--muted);
       }
 
-      main {
-        flex: 1;
-        position: relative;
+      /* ---- pfetch ------------------------------------------------------ */
+
+      /* One preformatted block, the way real pfetch prints it: art and info share a single
+         character grid, so the columns cannot drift and the title sits on the
+         first row of the art by construction. */
+      .fetch {
+        display: block;
+        margin: 0;
+        font: inherit;
+        white-space: pre;
+        overflow-x: auto;
       }
 
-      main::before {
-        content: "";
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: repeating-linear-gradient(
-          0deg,
-          rgba(255, 162, 39, 0.03),
-          rgba(255, 162, 39, 0.03) 1px,
-          transparent 1px,
-          transparent 2px
-        );
-        pointer-events: none;
+      .out .k {
+        color: var(--accent);
       }
 
-      .links {
-        width: 100%;
-        margin: 2rem 0;
-        display: flex;
-        gap: 1.5rem;
-        flex-wrap: wrap;
+      .out .v {
+        color: var(--ink);
       }
+
+      /* ---- listings ---------------------------------------------------- */
+
+      .listing {
+        display: grid;
+        grid-template-columns: max-content 1fr;
+        gap: 0 1.5rem;
+        max-width: 72ch;
+      }
+
+      .listing dt {
+        white-space: nowrap;
+      }
+
+      .listing dd {
+        margin: 0;
+      }
+
+      @media (max-width: 26rem) {
+        .listing {
+          grid-template-columns: 1fr;
+        }
+
+        .listing dd {
+          margin: 0 0 0.5rem;
+        }
+      }
+
+      /* ---- links ------------------------------------------------------- */
 
       a {
-        color: var(--accent-color);
+        color: var(--accent);
         text-decoration: none;
-        padding: 0.5rem 1rem;
-        text-transform: uppercase;
-        position: relative;
-        display: inline-block;
-        opacity: 0.9;
-        transition: background-color 0.2s ease, padding-left 0.15s ease-out;
       }
 
       a:hover {
-        background-color: var(--accent-color);
-        color: var(--link-hover);
-        text-shadow: none;
-        padding-left: 2rem;
-        opacity: 1;
+        color: var(--bg);
+        background-color: var(--accent);
       }
 
-      a:hover::before {
-        content: ">";
-        position: absolute;
-        left: 0.5rem;
-        top: 50%;
-        transform: translateY(-50%);
-        color: var(--link-hover);
+      /* ---- prompt: p10k rainbow, one line ------------------------------ */
+
+      .js-only {
+        display: none;
       }
 
-      .copyright {
-        font-size: 0.8rem;
-        opacity: 0.6;
-        margin-top: 2rem;
+      .js .js-only {
+        display: flex;
       }
 
-      @media (max-width: 600px) {
-        .container {
-          padding: 0.5rem;
-          align-items: flex-start;
+      .prompt {
+        align-items: stretch;
+        margin: var(--gap) 0 0;
+        padding: 0;
+        border: 0;
+      }
+
+      /* line-height 1 makes the text box hug the glyph, so align-items
+         centres the character itself rather than a taller line box. */
+      .seg {
+        display: flex;
+        align-items: center;
+        padding: 0 0.75ch;
+        line-height: 1;
+        white-space: nowrap;
+      }
+
+      .seg-user {
+        background-color: var(--pl-user-bg);
+        color: var(--pl-user-fg);
+      }
+
+      .seg-dir {
+        background-color: var(--pl-dir-bg);
+        color: var(--pl-dir-fg);
+      }
+
+      /* Powerline arrowheads without a Nerd Font: each separator is painted
+         in the NEXT segment's fill, with the previous segment's fill clipped
+         to a triangle on top. Scales with the row, needs no PUA glyph. */
+      .sep {
+        flex: none;
+        width: 0.625em;
+      }
+
+      .sep::before {
+        content: "";
+        display: block;
+        height: 100%;
+        clip-path: polygon(0 0, 100% 50%, 0 100%);
+      }
+
+      .sep-user {
+        background-color: var(--pl-dir-bg);
+      }
+
+      .sep-user::before {
+        background-color: var(--pl-user-bg);
+      }
+
+      .sep-dir::before {
+        background-color: var(--pl-dir-bg);
+      }
+
+      @media (max-width: 30rem) {
+        .seg-user,
+        .sep-user {
+          display: none;
+        }
+      }
+
+      #line {
+        flex: 1 1 auto;
+        min-width: 0;
+        align-self: center;
+        margin: 0;
+        padding: 0 0 0 0.75ch;
+        border: 0;
+        background: transparent;
+        color: var(--ink);
+        font: inherit;
+        line-height: inherit;
+        caret-color: var(--accent);
+        caret-shape: block;
+      }
+
+      #line:focus {
+        outline: none;
+      }
+
+      /* ---- key bar ----------------------------------------------------- */
+
+      .keys {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin: 0.75rem 0 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .keys button {
+        min-height: 2.5rem;
+        padding: 0.25rem 0.75rem;
+        border: 1px solid var(--frame);
+        background: transparent;
+        color: var(--ink);
+        font: inherit;
+        cursor: pointer;
+        transition: color 0.15s var(--ease), border-color 0.15s var(--ease),
+          background-color 0.15s var(--ease);
+      }
+
+      .keys button:hover,
+      .keys button:focus-visible {
+        border-color: var(--accent);
+        background-color: var(--accent);
+        color: var(--bg);
+      }
+
+      /* ---- footer ------------------------------------------------------ */
+
+      #stdout:not(:empty) {
+        margin-top: var(--gap);
+      }
+
+      .colophon {
+        margin: var(--gap) 0 0;
+        color: var(--muted);
+      }
+
+      .colophon p {
+        margin: 0;
+      }
+
+      /* ---- motion ------------------------------------------------------ */
+
+
+      /* cast gravity. Characters keep their place in the layout and move only
+         by transform, so the page never reflows and mend is just a matter of
+         clearing the transform again. */
+      .fall {
+        display: inline-block;
+        will-change: transform;
+      }
+
+      /* A link's own box stays where it was while its characters are on the
+         floor, so without this you can still hover an empty rectangle and
+         light it up. */
+      .fallen a {
+        pointer-events: none;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
         }
 
-        .ascii-art {
-          font-size: clamp(0.1rem, 1.2vw, 0.8rem);
-          max-width: 100%;
-          text-align: left;
-          margin-left: 0;
-        }
-
-        .terminal-output {
-          font-size: 0.8em;
-          padding: 0.5rem;
-          width: 100%;
-          max-width: 100%;
-          overflow-x: auto;
-        }
-
-        .links {
-          gap: 0.75rem;
-        }
-
-        a {
-          padding: 0.25rem 0.5rem;
-          font-size: 0.8rem;
-        }
-
-        a:hover {
-          padding-left: 1.5rem;
+        *,
+        *::before,
+        *::after {
+          transition-duration: 0.01ms !important;
         }
       }
     </style>
   </head>
-  <body>
-    <main>
-      <div class="container">
-        <pre class="ascii-art">
-    █████████     █████████   ███████████    █████  ███████████  ███████████
-   ███░░░░░███   ███░░░░░███ ░░███░░░░░███  ░░███  ░░███░░░░░███░█░░░███░░░█
-  ░███    ░░░   ███     ░░░   ░███    ░███   ░███   ░███    ░███░   ░███  ░
-  ░░█████████  ░███           ░██████████    ░███   ░██████████     ░███
-   ░░░░░░░░███ ░███           ░███░░░░░███   ░███   ░███░░░░░░      ░███
-   ███    ░███ ░░███     ███  ░███    ░███   ░███   ░███            ░███
-  ░░█████████   ░░█████████   █████   █████  █████  █████           █████
-   ░░░░░░░░░     ░░░░░░░░░   ░░░░░   ░░░░░  ░░░░░  ░░░░░           ░░░░░
- ▄█     █▄   ▄█   ▄███████▄     ▄████████    ▄████████ ████████▄     ▄████████
-███     ███ ███  ██▀     ▄██   ███    ███   ███    ███ ███   ▀███   ███    ███
-███     ███ ███▌       ▄███▀   ███    ███   ███    ███ ███    ███   ███    █▀
-███     ███ ███▌  ▀█▀▄███▀▄▄   ███    ███  ▄███▄▄▄▄██▀ ███    ███   ███
-███     ███ ███▌   ▄███▀   ▀ ▀███████████ ▀▀███▀▀▀▀▀   ███    ███ ▀███████████
-███     ███ ███  ▄███▀         ███    ███ ▀███████████ ███    ███          ███
-███ ▄█▄ ███ ███  ███▄     ▄█   ███    ███   ███    ███ ███   ▄███    ▄█    ███
- ▀███▀███▀  █▀    ▀████████▀   ███    █▀    ███    ███ ████████▀   ▄████████▀</pre
-        >
-        <pre class="terminal-output">
-<div class="pfetch"><span class="prompt">~/spells $</span> <span class="command">pfetch</span>
 
-      /\\        <span class="info-label">merlin</span>@<span class="info-label">scriptwizards</span>
-     /  \\       <span class="info-label">os</span>     <span class="info-value">Archmage Linux</span>
-    /\\  \\      <span class="info-label">kernel</span> <span class="info-value">5.2.21-arch-mage1</span>
-   /      \\     <span class="info-label">uptime</span> <span class="info-value">7 moons, 3 days</span>
-  /   ,,   \\    <span class="info-label">pkgs</span>   <span class="info-value">147 (spells)</span>
- /   |  |  -\\   <span class="info-label">shell</span>  <span class="info-value">rune 3.2.1</span>
-/_-''    ''-_\\  <span class="info-label">memory</span> <span class="info-value">28.4G / 32.0G</span>
-</div><span class="prompt">~/spells $</span> <span class="command">about</span>
-Script Wizards is a TTRPG and software studio
-The first issue launched on <a href="https://www.kickstarter.com/projects/script-wizards/script-wizards-rpg-zine-for-hackers?ref=5r2ytm">Kickstarter</a>
-Buy it on our <a href="https://store.scriptwizards.org">store</a> or <a href="https://scriptwizards.itch.io/issue-1">itch.io</a>
-<span class="prompt">~/spells $</span> <span class="command">links</span>
-merch  <a href="https://store.scriptwizards.org/">store.scriptwizards.org</a>
-insta  <a href="https://www.instagram.com/scriptwizards/">instagram.com/scriptwizards</a>
-code   <a href="https://github.com/script-wizards">github.com/script-wizards</a>
-mail   <a href="mailto:hello@scriptwizards.org">hello[at]scriptwizards.org</a>
-<span class="prompt">~/spells $</span> <span class="command">projects</span>
-chargen<a href="https://chargen.scriptwizards.org/">OSE character generator</a>
-cairn  <a href="https://chargen.scriptwizards.org/cairn">Cairn 2e generator</a>
-marty  <a href="https://github.com/script-wizards/marty">bookstore wizard</a>
-oracle <a href="https://scriptwizards.itch.io/oracle">random table roller</a>
-netdkr <a href="https://netdecker.app/">top mtg standard decks</a>
-dlmnwd <a href="https://dlmnwd.com/">dolmenwood tools</a>
-</pre>
-        <div class="copyright">© SCRIPT WIZARDS</div>
+  <body>
+    <script>
+      document.documentElement.classList.add("js");
+    </script>
+
+    <main class="shell">
+      <h1><svg class="masthead" viewBox="0 0 156 64" role="img" aria-label="Script Wizards" fill="currentColor"><path d="M8 0h18v2h-18z M36 0h18v2h-18z M60 0h22v2h-22z M90 0h10v2h-10z M104 0h22v2h-22z M130 0h22v2h-22z M8 2h18v2h-18z M36 2h18v2h-18z M60 2h22v2h-22z M90 2h10v2h-10z M104 2h22v2h-22z M130 2h22v2h-22z M6 4h6v2h-6z M22 4h6v2h-6z M34 4h6v2h-6z M50 4h6v2h-6z M62 4h6v2h-6z M78 4h6v2h-6z M92 4h6v2h-6z M106 4h6v2h-6z M122 4h6v2h-6z M130 4h2v2h-2z M138 4h6v2h-6z M150 4h2v2h-2z M6 6h6v2h-6z M22 6h6v2h-6z M34 6h6v2h-6z M50 6h6v2h-6z M62 6h6v2h-6z M78 6h6v2h-6z M92 6h6v2h-6z M106 6h6v2h-6z M122 6h6v2h-6z M130 6h2v2h-2z M138 6h6v2h-6z M150 6h2v2h-2z M6 8h6v2h-6z M32 8h6v2h-6z M62 8h6v2h-6z M78 8h6v2h-6z M92 8h6v2h-6z M106 8h6v2h-6z M122 8h6v2h-6z M138 8h6v2h-6z M6 10h6v2h-6z M32 10h6v2h-6z M62 10h6v2h-6z M78 10h6v2h-6z M92 10h6v2h-6z M106 10h6v2h-6z M122 10h6v2h-6z M138 10h6v2h-6z M8 12h18v2h-18z M32 12h6v2h-6z M62 12h20v2h-20z M92 12h6v2h-6z M106 12h20v2h-20z M138 12h6v2h-6z M8 14h18v2h-18z M32 14h6v2h-6z M62 14h20v2h-20z M92 14h6v2h-6z M106 14h20v2h-20z M138 14h6v2h-6z M22 16h6v2h-6z M32 16h6v2h-6z M62 16h6v2h-6z M78 16h6v2h-6z M92 16h6v2h-6z M106 16h6v2h-6z M138 16h6v2h-6z M22 18h6v2h-6z M32 18h6v2h-6z M62 18h6v2h-6z M78 18h6v2h-6z M92 18h6v2h-6z M106 18h6v2h-6z M138 18h6v2h-6z M6 20h6v2h-6z M22 20h6v2h-6z M34 20h6v2h-6z M50 20h6v2h-6z M62 20h6v2h-6z M78 20h6v2h-6z M92 20h6v2h-6z M106 20h6v2h-6z M138 20h6v2h-6z M6 22h6v2h-6z M22 22h6v2h-6z M34 22h6v2h-6z M50 22h6v2h-6z M62 22h6v2h-6z M78 22h6v2h-6z M92 22h6v2h-6z M106 22h6v2h-6z M138 22h6v2h-6z M8 24h18v2h-18z M36 24h18v2h-18z M60 24h10v2h-10z M76 24h10v2h-10z M90 24h10v2h-10z M104 24h10v2h-10z M136 24h10v2h-10z M8 26h18v2h-18z M36 26h18v2h-18z M60 26h10v2h-10z M76 26h10v2h-10z M90 26h10v2h-10z M104 26h10v2h-10z M136 26h10v2h-10z M4 32h2v2h-2z M16 32h2v2h-2z M28 32h2v2h-2z M38 32h14v2h-14z M66 32h16v2h-16z M92 32h16v2h-16z M110 32h16v2h-16z M140 32h16v2h-16z M2 34h4v2h-4z M16 34h4v2h-4z M26 34h4v2h-4z M36 34h18v2h-18z M64 34h18v2h-18z M90 34h18v2h-18z M110 34h18v2h-18z M138 34h18v2h-18z M0 36h6v2h-6z M16 36h6v2h-6z M24 36h6v2h-6z M34 36h6v2h-6z M52 36h4v2h-4z M62 36h6v2h-6z M76 36h6v2h-6z M88 36h6v2h-6z M102 36h6v2h-6z M110 36h6v2h-6z M122 36h8v2h-8z M136 36h6v2h-6z M150 36h6v2h-6z M0 38h6v2h-6z M16 38h6v2h-6z M24 38h6v2h-6z M34 38h4v2h-4z M50 38h6v2h-6z M62 38h6v2h-6z M76 38h6v2h-6z M88 38h6v2h-6z M102 38h6v2h-6z M110 38h6v2h-6z M124 38h6v2h-6z M136 38h6v2h-6z M150 38h6v2h-6z M0 40h6v2h-6z M16 40h6v2h-6z M24 40h7v2h-7z M48 40h8v2h-8z M62 40h6v2h-6z M76 40h6v2h-6z M88 40h6v2h-6z M102 40h6v2h-6z M110 40h6v2h-6z M124 40h6v2h-6z M136 40h6v2h-6z M150 40h4v2h-4z M0 42h6v2h-6z M16 42h6v2h-6z M24 42h7v2h-7z M46 42h8v2h-8z M62 42h6v2h-6z M76 42h6v2h-6z M88 42h6v2h-6z M102 42h6v2h-6z M110 42h6v2h-6z M124 42h6v2h-6z M136 42h6v2h-6z M150 42h2v2h-2z M0 44h6v2h-6z M16 44h6v2h-6z M24 44h7v2h-7z M36 44h6v2h-6z M44 44h8v2h-8z M62 44h6v2h-6z M76 44h6v2h-6z M88 44h6v2h-6z M102 44h6v2h-6z M110 44h6v2h-6z M124 44h6v2h-6z M136 44h6v2h-6z M0 46h6v2h-6z M16 46h6v2h-6z M24 46h7v2h-7z M38 46h2v2h-2z M42 46h8v2h-8z M52 46h4v2h-4z M62 46h6v2h-6z M76 46h6v2h-6z M86 46h20v2h-20z M110 46h6v2h-6z M124 46h6v2h-6z M136 46h6v2h-6z M0 48h6v2h-6z M16 48h6v2h-6z M24 48h7v2h-7z M40 48h8v2h-8z M54 48h2v2h-2z M58 48h24v2h-24z M84 48h20v2h-20z M110 48h6v2h-6z M124 48h6v2h-6z M132 48h24v2h-24z M0 50h6v2h-6z M16 50h6v2h-6z M24 50h7v2h-7z M38 50h8v2h-8z M60 50h22v2h-22z M88 50h6v2h-6z M110 50h6v2h-6z M124 50h6v2h-6z M134 50h22v2h-22z M0 52h6v2h-6z M16 52h6v2h-6z M24 52h6v2h-6z M36 52h8v2h-8z M62 52h6v2h-6z M76 52h6v2h-6z M84 52h24v2h-24z M110 52h6v2h-6z M124 52h6v2h-6z M150 52h6v2h-6z M0 54h6v2h-6z M16 54h6v2h-6z M24 54h6v2h-6z M34 54h8v2h-8z M62 54h6v2h-6z M76 54h6v2h-6z M86 54h22v2h-22z M110 54h6v2h-6z M124 54h6v2h-6z M150 54h6v2h-6z M0 56h6v2h-6z M10 56h2v2h-2z M16 56h6v2h-6z M24 56h6v2h-6z M34 56h6v2h-6z M54 56h2v2h-2z M62 56h6v2h-6z M76 56h6v2h-6z M88 56h6v2h-6z M102 56h6v2h-6z M110 56h6v2h-6z M124 56h6v2h-6z M140 56h2v2h-2z M150 56h6v2h-6z M0 58h6v2h-6z M8 58h6v2h-6z M16 58h6v2h-6z M24 58h6v2h-6z M34 58h8v2h-8z M52 58h4v2h-4z M62 58h6v2h-6z M76 58h6v2h-6z M88 58h6v2h-6z M102 58h6v2h-6z M110 58h6v2h-6z M122 58h8v2h-8z M138 58h4v2h-4z M150 58h6v2h-6z M2 60h18v2h-18z M24 60h4v2h-4z M36 60h20v2h-20z M62 60h6v2h-6z M76 60h4v2h-4z M88 60h6v2h-6z M102 60h6v2h-6z M110 60h18v2h-18z M136 60h18v2h-18z M4 62h6v2h-6z M12 62h6v2h-6z M24 62h2v2h-2z M38 62h16v2h-16z M62 62h6v2h-6z M76 62h2v2h-2z M88 62h6v2h-6z M102 62h6v2h-6z M110 62h16v2h-16z M134 62h18v2h-18z"/></svg></h1>
+
+      <p class="tagline">A TTRPG and software studio.</p>
+
+      <div id="log">
+        <section class="block">
+          <p class="cmd"><span class="chev">&#x276f;</span> pfetch</p>
+          <pre class="out fetch">      /\\        <span class="k">merlin@scriptwizards</span>
+     /  \\       <span class="k">os    </span> <span class="v">Archmage Linux</span>
+    /\\  \\      <span class="k">kernel</span> <span class="v">5.2.21-arch-mage1</span>
+   /      \\     <span class="k">uptime</span> <span class="v">7 moons, 3 days</span>
+  /   ,,   \\    <span class="k">pkgs  </span> <span class="v">147 (spells)</span>
+ /   |  |  -\\   <span class="k">shell </span> <span class="v">rune 3.2.1</span>
+/_-''    ''-_\\  <span class="k">memory</span> <span class="v">28.4G / 32.0G</span></pre>
+        </section>
+
+        <section class="block">
+          <p class="cmd"><span class="chev">&#x276f;</span> cat README</p>
+          <p class="out">We make tools for TTRPGs, and a zine for hackers who play them.</p>
+        </section>
+
+        <section class="block">
+          <p class="cmd"><span class="chev">&#x276f;</span> spells</p>
+          <dl class="out listing">
+            <dt><a href="https://chargen.scriptwizards.org/">chargen</a></dt>
+            <dd>OSE character generator</dd>
+
+            <dt><a href="https://chargen.scriptwizards.org/cairn">cairn</a></dt>
+            <dd>Cairn 2e generator</dd>
+
+            <dt><a href="https://perhaps.sh/">perhaps</a></dt>
+            <dd>random tables in plain text</dd>
+
+            <dt><a href="https://scriptwizards.itch.io/oracle">oracle</a></dt>
+            <dd>table roller, desktop app</dd>
+
+            <dt><a href="https://github.com/script-wizards/marty">marty</a></dt>
+            <dd>bookstore wizard</dd>
+
+            <dt><a href="https://netdecker.app/">netdkr</a></dt>
+            <dd>top MTG standard decks</dd>
+
+            <dt><a href="https://dlmnwd.com/">dlmnwd</a></dt>
+            <dd>Dolmenwood tools</dd>
+          </dl>
+        </section>
+
+        <section class="block">
+          <p class="cmd"><span class="chev">&#x276f;</span> cat zine.txt</p>
+          <p class="out">Issue 1 launched on <a href="https://www.kickstarter.com/projects/script-wizards/script-wizards-rpg-zine-for-hackers?ref=5r2ytm">Kickstarter</a>. A few articles are readable at <a href="https://zine.scriptwizards.org/">zine.scriptwizards.org</a>. More coming soon.</p>
+        </section>
+
+        <section class="block">
+          <p class="cmd"><span class="chev">&#x276f;</span> links</p>
+          <dl class="out listing">
+            <dt class="label">insta</dt>
+            <dd><a href="https://www.instagram.com/scriptwizards/">instagram.com/scriptwizards</a></dd>
+
+            <dt class="label">code</dt>
+            <dd><a href="https://github.com/script-wizards">github.com/script-wizards</a></dd>
+
+            <dt class="label">mail</dt>
+            <dd><a href="mailto:hello@scriptwizards.org">hello[at]scriptwizards.org</a></dd>
+          </dl>
+        </section>
       </div>
+
+      <div id="stdout" role="log" aria-live="polite"></div>
+
+      <form class="prompt js-only" id="form" autocomplete="off">
+        <span class="seg seg-user" aria-hidden="true">merlin@scriptwizards</span
+        ><span class="sep sep-user" aria-hidden="true"></span
+        ><span class="seg seg-dir" id="cwd" aria-hidden="true">~</span
+        ><span class="sep sep-dir" aria-hidden="true"></span>
+        <input
+          id="line"
+          name="line"
+          type="text"
+          spellcheck="false"
+          autocapitalize="off"
+          autocorrect="off"
+          aria-label="Type a command. Try help."
+        />
+      </form>
+
+      <ul class="keys js-only">
+        <li><button type="button" data-run="help">help</button></li>
+        <li><button type="button" data-run="ls">ls</button></li>
+        <li><button type="button" data-run="cast gravity">cast gravity</button></li>
+        <li><button type="button" data-run="roll 3d6">roll 3d6</button></li>
+      </ul>
+
+      <footer class="colophon">
+        <p>&copy; Script Wizards</p>
+      </footer>
     </main>
+
+    <script>
+      (() => {
+        "use strict";
+
+        const form = document.getElementById("form");
+        const line = document.getElementById("line");
+        const stdout = document.getElementById("stdout");
+        const log = document.getElementById("log");
+        const tagline = document.querySelector(".tagline");
+        const cwdCell = document.getElementById("cwd");
+        const shell = document.querySelector(".shell");
+        const still = matchMedia("(prefers-reduced-motion: reduce)");
+
+
+
+        /* ---- output ---------------------------------------------------- */
+
+        const esc = (s) =>
+          String(s).replace(
+            /[&<>"]/g,
+            (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])
+          );
+
+        const link = (href, text) => `<a href="${esc(href)}">${esc(text)}</a>`;
+        const pick = (list) => list[Math.floor(Math.random() * list.length)];
+
+        function table(rows) {
+          const width = Math.max(...rows.map(([key]) => key.length));
+          return rows
+            .map(([key, value]) => `<span class="label">${esc(key.padEnd(width))}</span>  ${value}`)
+            .join("\n");
+        }
+
+        function echo(input, html) {
+          const block = document.createElement("section");
+          block.className = "block";
+          block.innerHTML =
+            '<p class="cmd"><span class="chev">❯</span> ' +
+            esc(input) +
+            '</p><div class="out">' +
+            html +
+            "</div>";
+          stdout.append(block);
+          block.scrollIntoView({ block: "nearest", behavior: still.matches ? "auto" : "smooth" });
+        }
+
+        /* ---- the tools ------------------------------------------------- */
+
+        const SPELLS = [
+          ["chargen", "OSE character generator", "https://chargen.scriptwizards.org/"],
+          ["cairn", "Cairn 2e generator", "https://chargen.scriptwizards.org/cairn"],
+          ["perhaps", "random tables in plain text", "https://perhaps.sh/"],
+          ["oracle", "table roller, desktop app", "https://scriptwizards.itch.io/oracle"],
+          ["marty", "bookstore wizard", "https://github.com/script-wizards/marty"],
+          ["netdkr", "top MTG standard decks", "https://netdecker.app/"],
+          ["dlmnwd", "Dolmenwood tools", "https://dlmnwd.com/"],
+        ];
+
+        /* ---- a very small filesystem ----------------------------------- */
+
+        const FILES = {
+          README:
+            "Script Wizards is a TTRPG and software studio.\n\n" +
+            "We make tools for TTRPGs, and a zine for hackers who play them.\n\n" +
+            'Run <span class="hit">spells</span> to see the tools. Run <span class="hit">cast</span> if you would\n' +
+            "rather see something happen.",
+          "zine.txt":
+            "Issue 1 launched on " +
+            link(
+              "https://www.kickstarter.com/projects/script-wizards/script-wizards-rpg-zine-for-hackers?ref=5r2ytm",
+              "Kickstarter"
+            ) +
+            ".\n\nA few articles are readable at\n" +
+            link("https://zine.scriptwizards.org/", "zine.scriptwizards.org") +
+            ". More coming soon.",
+          "colophon.txt":
+            "One HTML file. No build step, no framework, no analytics.\n" +
+            "Type is GNU Unifont, subset to the glyphs this page uses.\n" +
+            "The masthead is block characters turned into vectors.\n\n" +
+            "View source. That is the documentation.",
+          "familiar.conf":
+            '<span class="label">[familiar]</span>\n' +
+            "species  = cat\n" +
+            "name     = Null\n" +
+            "bound    = true\n" +
+            "feeds_at = 04:00\n" +
+            "purrs    = when the build passes",
+          "contract.txt": null,
+        };
+
+        const DIRS = {
+          "~": ["spells/", "README", "colophon.txt", "contract.txt", "familiar.conf", "zine.txt"],
+          "~/spells": SPELLS.map(([name]) => name),
+        };
+
+        let cwd = "~";
+
+        /* ---- spellcraft ------------------------------------------------ */
+
+        /* Everything in these three roots falls. The prompt and the key bar
+           are deliberately not among them, so you still have somewhere to
+           stand and something to type mend into. */
+        function shatter() {
+          const cells = [];
+
+          for (const root of [tagline, log, stdout]) {
+            const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+            const nodes = [];
+            while (walker.nextNode()) nodes.push(walker.currentNode);
+
+            for (const node of nodes) {
+              if (!node.nodeValue.trim()) continue;
+              const pieces = document.createDocumentFragment();
+              for (const ch of node.nodeValue) {
+                if (ch === " " || ch === "\n") {
+                  pieces.append(ch);
+                  continue;
+                }
+                const cell = document.createElement("span");
+                cell.className = "fall";
+                cell.textContent = ch;
+                pieces.append(cell);
+                cells.push(cell);
+              }
+              node.replaceWith(pieces);
+            }
+          }
+
+          const art = document.querySelector(".masthead");
+          art.classList.add("fall");
+          cells.push(art);
+          document.body.classList.add("fallen");
+
+          /* Measure every character before moving any of them, so all the
+             reads happen against one layout instead of forcing a reflow on
+             each pass through the loop. */
+          const floor = document.documentElement.scrollHeight;
+          const drops = cells.map((cell) => {
+            const box = cell.getBoundingClientRect();
+            return floor - (box.top + scrollY) - box.height;
+          });
+
+          requestAnimationFrame(() => {
+            cells.forEach((cell, i) => {
+              /* Land in a heap a few rows deep rather than a tidy line. */
+              const drop = Math.max(0, drops[i] - Math.random() * 52);
+              const drift = (Math.random() * 2 - 1) * 56;
+              const spin = Math.random() * 170 - 85;
+              /* Constant acceleration: falling twice as far takes root two as
+                 long, not twice as long. */
+              const fall = Math.max(0.4, Math.sqrt(drop) / 24);
+              const wait = Math.random() * 0.3;
+              cell.style.transition =
+                `transform ${fall.toFixed(2)}s cubic-bezier(0.45, 0, 1, 1) ${wait.toFixed(2)}s`;
+              cell.style.transform =
+                `translate(${drift.toFixed(0)}px, ${drop.toFixed(0)}px) rotate(${spin.toFixed(0)}deg)`;
+            });
+          });
+        }
+
+        /* Clearing the transform is the whole of it: every character still
+           occupies its original box, so they fly back to exactly where they
+           were, and anything typed while the page was down survives. */
+        function mend() {
+          const cells = [...document.querySelectorAll(".fall")];
+          cells.forEach((cell, i) => {
+            cell.style.transition =
+              `transform 0.7s cubic-bezier(0.16, 1, 0.3, 1) ${((i % 60) * 0.008).toFixed(3)}s`;
+            cell.style.transform = "";
+          });
+          setTimeout(() => {
+            cells.forEach((cell) => {
+              cell.classList.remove("fall");
+              cell.removeAttribute("style");
+            });
+            document.body.classList.remove("fallen");
+          }, 1400);
+          return cells.length;
+        }
+
+        const CANTRIPS = {
+          gravity: () => {
+            if (still.matches) return "cast: the air is too still for that today.";
+            if (document.querySelector(".fall")) return "cast: it is already on the floor. Try mend.";
+            setTimeout(shatter, 60);
+            return "You speak the word. The letters lose their grip.";
+          },
+          light: () => {
+            const lit = document.documentElement.getAttribute("data-theme") === "light";
+            if (lit) {
+              document.documentElement.removeAttribute("data-theme");
+              return "The light goes out.";
+            }
+            document.documentElement.setAttribute("data-theme", "light");
+            return "Daylight, for as long as you want it. Cast it again to dismiss.";
+          },
+          mend: () => {
+            const put = mend();
+            if (put) return `${put} characters climb back into place.`;
+            if (document.documentElement.getAttribute("data-theme")) {
+              document.documentElement.removeAttribute("data-theme");
+              return "Put back the way it was.";
+            }
+            return "Nothing here is broken.";
+          },
+        };
+
+        /* ---- dice ------------------------------------------------------ */
+
+        function roll(spec) {
+          const parsed = /^(\d*)d(\d+)([+-]\d+)?$/i.exec(spec.trim());
+          if (!parsed) return `roll: cannot parse "${esc(spec.trim())}". Try 3d6, d20, or 2d8+3.`;
+
+          const count = Math.min(parseInt(parsed[1] || "1", 10), 24);
+          const sides = Math.min(parseInt(parsed[2], 10), 1000);
+          const modifier = parseInt(parsed[3] || "0", 10);
+          if (!count || !sides) return "roll: a die needs at least one side.";
+
+          const dice = Array.from({ length: count }, () => 1 + Math.floor(Math.random() * sides));
+          const total = dice.reduce((a, b) => a + b, 0) + modifier;
+          const faces = dice.map((die) => `<span class="hit">[${die}]</span>`).join(" ");
+          const shown = modifier ? ` ${modifier > 0 ? "+" : "-"} ${Math.abs(modifier)}` : "";
+
+          let aside = "";
+          if (count === 1 && sides === 20 && dice[0] === 20) {
+            aside = '\n<span class="quiet">A natural 20. Describe it well.</span>';
+          } else if (count === 1 && sides === 20 && dice[0] === 1) {
+            aside = '\n<span class="quiet">A natural 1. The dungeon does not care that you had a plan.</span>';
+          }
+
+          return `${esc(spec.trim())}  ${faces}${shown}  =  <span class="bright">${total}</span>${aside}`;
+        }
+
+        /* ---- odds and ends --------------------------------------------- */
+
+        const FORTUNES = [
+          "The dungeon does not care that you had a plan.",
+          "Every ruling is a commit. Some of them get reverted.",
+          "A rule you look up twice belongs on the character sheet.",
+          "Read the spell description. Then read it again. The parser is unforgiving.",
+          "Ten-foot pole, one gold. Cheaper than a cleric.",
+          "The best random table is the one you actually roll on.",
+          "No plan survives a player who took Comprehend Languages.",
+          "If the trap is fair they will still call it unfair. Make it fair anyway.",
+          "Write the dungeon in pencil.",
+          "Wandering monsters are a scheduler, not a punishment.",
+        ];
+
+        const MANUALS = {
+          spells:
+            "NAME\n    spells - invoke a Script Wizards tool\n\n" +
+            "SYNOPSIS\n    spells\n    spells &lt;name&gt;\n\n" +
+            "DESCRIPTION\n    With no argument, lists what is installed. With a name,\n" +
+            "    opens that tool.",
+          cast:
+            "NAME\n    cast - work a cantrip on this page\n\n" +
+            "SYNOPSIS\n    cast &lt;gravity|light|mend&gt;\n\n" +
+            "SEE ALSO\n    mend, which is the only way back up.",
+          roll:
+            "NAME\n    roll - throw dice\n\n" +
+            "SYNOPSIS\n    roll [count]d[sides][+/-modifier]\n\n" +
+            "EXAMPLES\n    roll 3d6\n    roll d20\n    roll 2d8+3",
+          merlin:
+            "NAME\n    merlin - the only account on this system\n\n" +
+            "DESCRIPTION\n    Not in the sudoers file. Do not ask.",
+        };
+
+        /* ---- commands -------------------------------------------------- */
+
+        const history = [];
+        let cursor = 0;
+
+        const COMMANDS = {
+          help: () =>
+            table([
+              ["ls", "look around"],
+              ["cat <file>", "read one"],
+              ["spells", "the tools we have shipped"],
+              ["spells <name>", "open one"],
+              ["cast <cantrip>", "gravity, light, mend"],
+              ["roll 3d6", "throw dice, any spec"],
+              ["fortune", "table wisdom, one line"],
+              ["links", "where else to find us"],
+              ["man <topic>", "read the manual"],
+              ["clear", "wipe the scrollback"],
+            ]) + '\n\n<span class="quiet">Arrow keys walk the history. Tab completes.</span>',
+
+          ls: (args) => {
+            const where = args.trim() ? resolve(args.trim()) : cwd;
+            if (!DIRS[where]) return `ls: cannot access ${esc(args.trim())}: No such file or directory`;
+            return DIRS[where]
+              .map((name) =>
+                name.endsWith("/") || where === "~/spells"
+                  ? `<span class="hit">${esc(name)}</span>`
+                  : `<span class="bright">${esc(name)}</span>`
+              )
+              .join("\n");
+          },
+
+          cat: (args) => {
+            const name = args.trim();
+            if (!name) return "cat: which one?";
+            if (name === "spells" || name === "spells/") return "cat: spells: Is a directory";
+            if (SPELLS.some(([tool]) => tool === name)) {
+              return `cat: ${esc(name)}: is a binary. Try <span class="hit">spells ${esc(name)}</span>`;
+            }
+            if (!(name in FILES)) return `cat: ${esc(name)}: No such file or directory`;
+            if (FILES[name] === null) {
+              return (
+                `cat: ${esc(name)}: Permission denied\n` +
+                '<span class="quiet">Do not ask your wizard to sign a magical contract.</span>'
+              );
+            }
+            return FILES[name];
+          },
+
+          cd: (args) => {
+            const where = resolve(args.trim() || "~");
+            if (!DIRS[where]) return `cd: ${esc(args.trim())}: No such file or directory`;
+            cwd = where;
+            cwdCell.textContent = cwd;
+            return null;
+          },
+
+          pwd: () => "/home/merlin" + cwd.slice(1),
+
+          spells: (args) => {
+            const name = args.trim();
+            if (!name) {
+              const width = Math.max(...SPELLS.map(([tool]) => tool.length));
+              return SPELLS.map(
+                ([tool, about, href]) =>
+                  link(href, tool) + " ".repeat(width - tool.length) + `  ${esc(about)}`
+              ).join("\n");
+            }
+            const found = SPELLS.find(([tool]) => tool === name.toLowerCase());
+            if (!found) return `spells: no such spell: ${esc(name)}`;
+            window.open(found[2], "_blank", "noopener");
+            return (
+              `casting <span class="hit">${esc(found[0])}</span>...\n` +
+              `<span class="quiet">If nothing opened:</span> ${link(found[2], found[2])}`
+            );
+          },
+
+          cast: (args) => {
+            const name = args.trim().toLowerCase();
+            if (!name) {
+              return (
+                table([
+                  ["gravity", "let go of every letter on the page"],
+                  ["light", "daylight, until you dismiss it"],
+                  ["mend", "pick the letters up again"],
+                ]) + '\n\n<span class="quiet">cast &lt;name&gt;</span>'
+              );
+            }
+            const cantrip = CANTRIPS[name];
+            return cantrip ? cantrip() : `cast: you do not know that one: ${esc(name)}`;
+          },
+
+          roll: (args) => roll(args || "d20"),
+
+          fortune: () => pick(FORTUNES),
+
+          links: () =>
+            table([
+              ["insta", link("https://www.instagram.com/scriptwizards/", "instagram.com/scriptwizards")],
+              ["code", link("https://github.com/script-wizards", "github.com/script-wizards")],
+              ["mail", link("mailto:hello@scriptwizards.org", "hello[at]scriptwizards.org")],
+            ]),
+
+          man: (args) => {
+            const topic = args.trim().toLowerCase();
+            if (!topic) return "What manual page do you want?";
+            return MANUALS[topic] || `No manual entry for ${esc(topic)}`;
+          },
+
+          pfetch: () =>
+            '<span class="fetch">' +
+            document.querySelector("#log .fetch").innerHTML +
+            "</span>",
+
+          uname: () => "Archmage Linux 5.2.21-arch-mage1 x86_64",
+
+          uptime: () => "up 7 moons, 3 days, 1 wizard logged in",
+
+          date: () => esc(new Date().toString()),
+
+          echo: (args) => esc(args),
+
+          sudo: () =>
+            "merlin is not in the sudoers file.\nThis incident has been reported to the Archmage.",
+
+          history: () =>
+            history.length
+              ? history
+                  .map((entry, i) => `<span class="label">${String(i + 1).padStart(4)}</span>  ${esc(entry)}`)
+                  .join("\n")
+              : "Nothing yet.",
+
+          exit: () => "logout: you are the only wizard logged in.",
+
+          clear: () => {
+            stdout.replaceChildren();
+            return null;
+          },
+        };
+
+        COMMANDS.whoami = () => COMMANDS.cat("README");
+        COMMANDS.zine = () => COMMANDS.cat("zine.txt");
+        COMMANDS.neofetch = COMMANDS.pfetch;
+
+        function resolve(target) {
+          if (!target || target === "~" || target === "/" || target === "..") return "~";
+          return "~/" + target.replace(/\/$/, "").replace(/^~\//, "");
+        }
+
+        const ALIASES = { d20: "roll d20", d6: "roll d6", "?": "help", ll: "ls" };
+
+        function run(input) {
+          const raw = input.trim();
+          if (!raw) return;
+
+          history.push(raw);
+          cursor = history.length;
+
+          const expanded = ALIASES[raw.toLowerCase()] || raw;
+          const [name, ...rest] = expanded.split(/\s+/);
+          const key = name.toLowerCase();
+
+          if (/^\d*d\d+([+-]\d+)?$/i.test(key)) {
+            echo(raw, roll(expanded));
+            return;
+          }
+
+          const command = COMMANDS[key];
+          if (!command) {
+            echo(
+              raw,
+              `rune: command not found: ${esc(name)}\nType <span class="hit">help</span> for what this shell knows.`
+            );
+            return;
+          }
+
+          const output = command(rest.join(" "));
+          if (output !== null) echo(raw, output);
+        }
+
+
+        /* ---- tab completion -------------------------------------------- */
+
+        /* What can follow each command. The first word completes against the
+           command table; everything after it completes against whatever that
+           command actually accepts, so `cat <tab>` offers the files in the
+           directory you are standing in. */
+        function poolFor(words) {
+          if (words.length <= 1) return Object.keys(COMMANDS);
+          const here = (DIRS[cwd] || []).map((name) => name.replace(/\/$/, ""));
+          return {
+            cat: here,
+            ls: here,
+            cd: cwd === "~" ? ["spells"] : [".."],
+            spells: SPELLS.map(([tool]) => tool),
+            cast: Object.keys(CANTRIPS),
+            man: Object.keys(MANUALS),
+          }[words[0].toLowerCase()] || [];
+        }
+
+        function sharedPrefix(names) {
+          return names.reduce((a, b) => {
+            let i = 0;
+            while (i < a.length && a[i].toLowerCase() === b[i]?.toLowerCase()) i++;
+            return a.slice(0, i);
+          });
+        }
+
+        function tabComplete() {
+          const words = line.value.split(/\s+/);
+          const stem = words[words.length - 1];
+          const hits = poolFor(words).filter((name) =>
+            name.toLowerCase().startsWith(stem.toLowerCase())
+          );
+          if (!hits.length) return;
+
+          const grown = hits.length === 1 ? hits[0] + " " : sharedPrefix(hits);
+          if (grown.length > stem.length) {
+            words[words.length - 1] = grown;
+            line.value = words.join(" ");
+          } else if (hits.length > 1) {
+            /* bash prints the candidates once the prefix stops growing */
+            echo(line.value, hits.map((name) => `<span class="hit">${esc(name)}</span>`).join("  "));
+          }
+        }
+
+        /* ---- input ----------------------------------------------------- */
+
+        form.addEventListener("submit", (event) => {
+          event.preventDefault();
+          run(line.value);
+          line.value = "";
+        });
+
+        line.addEventListener("keydown", (event) => {
+          if (event.key === "ArrowUp") {
+            event.preventDefault();
+            if (cursor > 0) line.value = history[--cursor];
+          } else if (event.key === "ArrowDown") {
+            event.preventDefault();
+            cursor = Math.min(cursor + 1, history.length);
+            line.value = history[cursor] || "";
+          } else if (event.key === "Tab") {
+            event.preventDefault();
+            tabComplete();
+          } else if (event.ctrlKey && event.key === "l") {
+            event.preventDefault();
+            stdout.replaceChildren();
+          } else if (event.ctrlKey && event.key === "c") {
+            event.preventDefault();
+            line.value = "";
+          }
+        });
+
+        document.querySelectorAll("[data-run]").forEach((button) => {
+          button.addEventListener("click", () => {
+            run(button.dataset.run);
+            line.focus({ preventScroll: true });
+          });
+        });
+
+        /* Clicking dead space focuses the prompt, the way a terminal
+           emulator does. Selecting text must not have it stolen back. */
+        shell.addEventListener("click", (event) => {
+          if (event.target.closest("a, button, input, label")) return;
+          if (!getSelection().isCollapsed) return;
+          line.focus({ preventScroll: true });
+        });
+
+        if (matchMedia("(pointer: fine)").matches) line.focus({ preventScroll: true });
+      })();
+    </script>
   </body>
 </html>
