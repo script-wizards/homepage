@@ -1,108 +1,168 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>chargen | Script Wizards</title>
-    <link
-      rel="icon"
-      type="image/png"
-      href="https://cdn.statically.io/gh/script-wizards/homepage/main/favicon.png"
-    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>404 | Script Wizards</title>
+    <meta name="robots" content="noindex" />
+    <meta name="theme-color" content="#111111" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+
     <style>
+      /* GNU Unifont (dual GPLv2+fontex/OFL), subset to Latin-1 plus the
+         box-drawing and block ranges. Crisp at 16px and 32px only, which
+         is why the type scale here is those two sizes and nothing else. */
+      @font-face {
+        font-family: "unifont";
+        src: url("/unifont-subset.woff2") format("woff2");
+        font-display: swap;
+      }
+
+      :root {
+        --bg: #111111;
+        --ink: #ffffff;
+        --accent: #ffa227;
+        --dim: #ffffff;
+        --muted: #ffffff;
+        --frame: #3d3d3d;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
       html {
-        height: 100%;
+        background-color: var(--bg);
       }
+
       body {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        height: 100%;
         margin: 0;
-        background-color: #212121;
-        font-family: monospace;
-        color: #ece3d0;
+        padding: 2rem 1rem 2.5rem;
+        background-color: var(--bg);
+        color: var(--dim);
+        font-family: "unifont", ui-monospace, "DejaVu Sans Mono", "Courier New", monospace;
+        font-size: 16px;
+        line-height: 1.25;
+        -webkit-text-size-adjust: 100%;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
       }
-      p,
-      pre {
-        margin-top: 0;
-        margin-bottom: 0;
-        background-color: transparent;
-        font-family: monospace;
+
+      ::selection {
+        background-color: var(--accent);
+        color: var(--bg);
       }
-      a:link {
-        color: #ffa227;
-        background-color: transparent;
+
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      /* Auto margins centre the column on a HALF pixel whenever the leftover
+         space is odd, and that half pixel changes every time the window
+         resizes. Unifont's stems are one pixel wide, so a half-pixel offset
+         gets resampled across the LCD's red/green/blue stripes and the text
+         picks up a colour fringe that swings green to magenta as you drag.
+         Snapping the offset to a whole pixel removes the resampling, so the
+         glyphs land on the grid and no antialiasing runs at all. */
+      .shell {
+        width: min(100%, 40rem);
+        margin-inline: auto;
+      }
+
+      @supports (margin-left: round(down, 1px, 1px)) {
+        .shell {
+          margin-inline: round(down, (100% - min(100%, 40rem)) / 2, 1px) auto;
+        }
+      }
+
+      h1 {
+        margin: 0 0 1.5rem;
+        font-size: inherit;
+        font-weight: normal;
+      }
+
+      .code {
+        display: block;
+        width: min(100%, 14rem);
+        height: auto;
+        color: var(--ink);
+      }
+
+      .block {
+        margin: 0 0 1.75rem;
+      }
+
+      .cmd {
+        margin: 0 0 0.4rem;
+      }
+
+      .cmd {
+        color: var(--accent);
+      }
+
+      .cmd .typed {
+        color: var(--accent);
+      }
+
+      .out {
+        margin: 0;
+        max-width: 72ch;
+      }
+
+      .out .quiet {
+        color: var(--dim);
+      }
+
+      a {
+        color: var(--accent);
         text-decoration: none;
       }
-      a:visited {
-        color: #ffa227;
-        background-color: transparent;
-        text-decoration: none;
-      }
+
       a:hover {
-        color: #ffa227;
-        background-color: transparent;
-        text-decoration: underline;
+        color: var(--bg);
+        background-color: var(--accent);
       }
-      a:active {
-        color: #ffa227;
-        background-color: transparent;
-        text-decoration: underline;
+
+      .colophon {
+        margin: 1.125rem 0 0;
+        color: var(--muted);
       }
-      .print-only {
-        display: none;
-      }
-      @media print {
-        body {
-          color: #000000;
-          background-color: #ffffff;
-        }
-        a,
-        footer {
-          color: #000000 !important;
-        }
-        .no-print {
-          display: none;
-        }
-        .print-only {
-          display: inline;
-        }
-      }
-      footer {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        text-align: center;
-        color: #ece3d0;
-        background-color: #212121;
-        padding: 10px;
+
+      .colophon p {
+        margin: 0;
       }
     </style>
   </head>
+
   <body>
-    <div style="text-align: left">
-      <span id="a">merlin@scriptwizards.org</span>:<span id="b">~</span
-      ><span id="c">$</span> cat 404.txt
-      <pre>
-___   ___  ________  ___   ___
-|\  \ |\  \|\   __  \|\  \ |\  \
-\ \  \\_\  \ \  \|\  \ \  \\_\  \
- \ \______  \ \  \\\  \ \______  \
-  \|_____|\  \ \  \\\  \|_____|\  \
-         \ \__\ \_______\     \ \__\
-          \|__|\|_______|      \|__|
-      </pre>
-      This page is too strong for you, traveler.<br /><br /><a href="https://scriptwizards.org">Return</a>
-    </div>
-    <footer>
-      <a href="https://store.scriptwizards.org/">store</a>
-      <a href="https://www.instagram.com/scriptwizards/">instagram</a>
-      <a href="https://scriptwizards.itch.io/">itch.io</a>
-      <a href="https://github.com/script-wizards">github</a>
-      <a href="mailto:hello@scriptwizards.org">contact</a></br>
-      Copyright © 2023 Script Wizards
-    </footer>
+    <main class="shell">
+      <h1><svg class="code" viewBox="0 0 48 20" role="img" aria-label="404" fill="currentColor"><path d="M0 0h4v2h-4z M10 0h4v2h-4z M18 0h12v2h-12z M34 0h4v2h-4z M44 0h4v2h-4z M0 2h4v2h-4z M10 2h4v2h-4z M18 2h12v2h-12z M34 2h4v2h-4z M44 2h4v2h-4z M0 4h4v2h-4z M10 4h4v2h-4z M16 4h4v2h-4z M24 4h8v2h-8z M34 4h4v2h-4z M44 4h4v2h-4z M0 6h4v2h-4z M10 6h4v2h-4z M16 6h4v2h-4z M24 6h8v2h-8z M34 6h4v2h-4z M44 6h4v2h-4z M0 8h14v2h-14z M16 8h4v2h-4z M22 8h4v2h-4z M28 8h4v2h-4z M34 8h14v2h-14z M0 10h14v2h-14z M16 10h4v2h-4z M22 10h4v2h-4z M28 10h4v2h-4z M34 10h14v2h-14z M10 12h4v2h-4z M16 12h8v2h-8z M28 12h4v2h-4z M44 12h4v2h-4z M10 14h4v2h-4z M16 14h8v2h-8z M28 14h4v2h-4z M44 14h4v2h-4z M10 16h4v2h-4z M18 16h12v2h-12z M44 16h4v2h-4z M10 18h4v2h-4z M18 18h12v2h-12z M44 18h4v2h-4z"/></svg></h1>
+
+      <section class="block">
+        <p class="cmd">
+          <span class="chev">❯</span> <span class="typed">cat 404.txt</span>
+        </p>
+        <p class="out">
+          <span class="quiet">cat: 404.txt: No such file or directory</span>
+        </p>
+      </section>
+
+      <section class="block">
+        <p class="out">This page is too strong for you, traveler.</p>
+      </section>
+
+      <section class="block">
+        <p class="cmd">
+          <span class="chev">❯</span> <span class="typed">cd <a href="/">/</a></span>
+        </p>
+      </section>
+
+      <footer class="colophon">
+        <p>&copy; Script Wizards</p>
+      </footer>
+    </main>
   </body>
 </html>
