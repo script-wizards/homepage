@@ -258,7 +258,16 @@
         display: flex;
       }
 
+      /* The prompt and the key bar stand in front of the heap that cast
+         gravity leaves at the bottom of the page. */
+      .prompt,
+      .keys {
+        position: relative;
+        z-index: 1;
+      }
+
       .prompt {
+        background-color: var(--bg);
         align-items: stretch;
         margin: var(--gap) 0 0;
         padding: 0;
@@ -352,7 +361,7 @@
         min-height: 2.5rem;
         padding: 0.25rem 0.75rem;
         border: 1px solid var(--frame);
-        background: transparent;
+        background: var(--bg);
         color: var(--ink);
         font: inherit;
         cursor: pointer;
@@ -386,11 +395,12 @@
 
 
       /* cast gravity. Characters keep their place in the layout and move only
-         by transform, so the page never reflows and mend is just a matter of
-         clearing the transform again. */
+         by transform, so the page never reflows. Lifting them again only
+         clears the transform. */
       .fall {
         display: inline-block;
         will-change: transform;
+        pointer-events: none;
       }
 
       /* A link's own box stays where it was while its characters are on the
@@ -619,7 +629,7 @@
 
         /* Everything in these three roots falls. The prompt and the key bar
            are deliberately not among them, so you still have somewhere to
-           stand and something to type mend into. */
+           stand and something to type into. */
         function shatter() {
           const cells = [];
 
@@ -681,7 +691,7 @@
         /* Clearing the transform is the whole of it: every character still
            occupies its original box, so they fly back to exactly where they
            were, and anything typed while the page was down survives. */
-        function mend() {
+        function lift() {
           const cells = [...document.querySelectorAll(".fall")];
           cells.forEach((cell, i) => {
             cell.style.transition =
@@ -700,10 +710,11 @@
 
         const CANTRIPS = {
           gravity: () => {
+            const lifted = lift();
+            if (lifted) return `${lifted} characters climb back into place.`;
             if (still.matches) return "cast: the air is too still for that today.";
-            if (document.querySelector(".fall")) return "cast: it is already on the floor. Try mend.";
             setTimeout(shatter, 60);
-            return "You speak the word. The letters lose their grip.";
+            return "You speak the word. The letters lose their grip. Cast it again to lift them.";
           },
           light: () => {
             const lit = document.documentElement.getAttribute("data-theme") === "light";
@@ -713,15 +724,6 @@
             }
             document.documentElement.setAttribute("data-theme", "light");
             return "Daylight, for as long as you want it. Cast it again to dismiss.";
-          },
-          mend: () => {
-            const put = mend();
-            if (put) return `${put} characters climb back into place.`;
-            if (document.documentElement.getAttribute("data-theme")) {
-              document.documentElement.removeAttribute("data-theme");
-              return "Put back the way it was.";
-            }
-            return "Nothing here is broken.";
           },
         };
 
@@ -1043,8 +1045,8 @@
             "    opens that tool.",
           cast:
             "NAME\n    cast - work a cantrip on this page\n\n" +
-            "SYNOPSIS\n    cast &lt;gravity|light|mend&gt;\n\n" +
-            "SEE ALSO\n    mend, which is the only way back up.",
+            "SYNOPSIS\n    cast &lt;gravity|light&gt;\n\n" +
+            "DESCRIPTION\n    Cast the same cantrip again to undo it.",
           roll:
             "NAME\n    roll - throw dice\n\n" +
             "SYNOPSIS\n    roll [count]d[sides][+/-modifier]\n\n" +
@@ -1087,7 +1089,7 @@
               ["cat <file>", "read one"],
               ["spells", "the tools we have shipped"],
               ["spells <name>", "open one"],
-              ["cast <cantrip>", "gravity, light, mend"],
+              ["cast <cantrip>", "gravity or light"],
               ["roll 3d6", "throw dice, any spec"],
               ["fortune", "table wisdom, one line"],
               ["sky", "today's hour, moon and card"],
@@ -1164,7 +1166,6 @@
                 table([
                   ["gravity", "let go of every letter on the page"],
                   ["light", "daylight, until you dismiss it"],
-                  ["mend", "pick the letters up again"],
                 ]) + '\n\n<span class="quiet">cast &lt;name&gt;</span>'
               );
             }
@@ -1244,7 +1245,14 @@
           return "~/" + target.replace(/\/$/, "").replace(/^~\//, "");
         }
 
-        const ALIASES = { d20: "roll d20", d6: "roll d6", "?": "help", ll: "ls" };
+        const ALIASES = {
+          d20: "roll d20",
+          d6: "roll d6",
+          "?": "help",
+          ll: "ls",
+          gravity: "cast gravity",
+          light: "cast light",
+        };
 
         function run(input) {
           const raw = input.trim();
