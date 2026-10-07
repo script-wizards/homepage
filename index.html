@@ -751,6 +751,131 @@
           return `${esc(spec.trim())}  ${faces}${shown}  =  <span class="bright">${total}</span>${aside}`;
         }
 
+        /* ---- tarot ----------------------------------------------------- */
+
+        /* The Rider-Waite-Smith deck with A. E. Waite's meanings in short.
+           Athanor draws from the same table. */
+        const DECK = [
+          ["0 The Fool", "beginnings, a leap, innocence", "recklessness, hesitation"],
+          ["I The Magician", "will, skill, making it happen", "trickery, untapped talent"],
+          ["II The High Priestess", "intuition, the hidden, silence", "secrets kept, surface reading"],
+          ["III The Empress", "abundance, growth, care", "smothering, stalled work"],
+          ["IV The Emperor", "structure, authority, order", "rigidity, control slipping"],
+          ["V The Hierophant", "tradition, teaching, convention", "dogma, breaking the rules"],
+          ["VI The Lovers", "union, choice, alignment", "discord, a choice avoided"],
+          ["VII The Chariot", "drive, victory through control", "scattered will, losing the road"],
+          ["VIII Strength", "patience, quiet courage", "self-doubt, force over gentleness"],
+          ["IX The Hermit", "solitude, searching, an inner light", "isolation, withdrawal"],
+          ["X Wheel of Fortune", "cycles, turning luck", "bad timing, resisting change"],
+          ["XI Justice", "fairness, cause and effect", "imbalance, dodging accountability"],
+          ["XII The Hanged Man", "pause, surrender, a new view", "stalling, needless sacrifice"],
+          ["XIII Death", "endings, transformation", "clinging, slow decay"],
+          ["XIV Temperance", "balance, moderation, mixing well", "excess, impatience"],
+          ["XV The Devil", "bondage, appetite, attachment", "release, breaking chains"],
+          ["XVI The Tower", "upheaval, sudden truth", "disaster averted, fear of change"],
+          ["XVII The Star", "hope, renewal, calm", "discouragement, faith wavering"],
+          ["XVIII The Moon", "illusion, dreams, unease", "confusion lifting, fear released"],
+          ["XIX The Sun", "clarity, success, warmth", "clouded joy, delay"],
+          ["XX Judgement", "reckoning, awakening, a call", "self-doubt, ignoring the call"],
+          ["XXI The World", "completion, integration, arrival", "loose ends, a near finish"],
+          ["Ace of Wands", "spark, inspiration", "delays, a false start"],
+          ["Two of Wands", "planning, looking ahead", "fear of the unknown"],
+          ["Three of Wands", "expansion, foresight", "obstacles at a distance"],
+          ["Four of Wands", "celebration, homecoming", "shaky foundations"],
+          ["Five of Wands", "conflict, competition", "avoidance, an uneasy truce"],
+          ["Six of Wands", "victory, recognition", "pride before a fall"],
+          ["Seven of Wands", "holding your ground", "overwhelmed, giving way"],
+          ["Eight of Wands", "speed, news in motion", "delays, frustration"],
+          ["Nine of Wands", "resilience, the last stand", "exhaustion"],
+          ["Ten of Wands", "burden, overcommitment", "setting the load down"],
+          ["Page of Wands", "curiosity, a message", "scattered energy"],
+          ["Knight of Wands", "action, adventure", "haste"],
+          ["Queen of Wands", "confidence, warmth", "jealousy"],
+          ["King of Wands", "vision, leadership", "impulsiveness"],
+          ["Ace of Cups", "new feeling, overflow", "emotional block"],
+          ["Two of Cups", "partnership, mutual pull", "imbalance between two"],
+          ["Three of Cups", "friendship, celebration", "overindulgence"],
+          ["Four of Cups", "apathy, contemplation", "renewed interest"],
+          ["Five of Cups", "loss, regret", "acceptance"],
+          ["Six of Cups", "nostalgia, kindness", "stuck in the past"],
+          ["Seven of Cups", "choices, fantasy", "clarity arrives"],
+          ["Eight of Cups", "walking away", "fear of leaving"],
+          ["Nine of Cups", "contentment, a wish granted", "smugness"],
+          ["Ten of Cups", "harmony, family", "a broken home"],
+          ["Page of Cups", "tender news, intuition", "emotional immaturity"],
+          ["Knight of Cups", "romance, an invitation", "moodiness"],
+          ["Queen of Cups", "compassion, calm", "martyrdom"],
+          ["King of Cups", "emotional balance", "manipulation"],
+          ["Ace of Swords", "clarity, breakthrough", "confusion"],
+          ["Two of Swords", "stalemate, a hard choice", "too much information"],
+          ["Three of Swords", "heartbreak, grief", "recovery"],
+          ["Four of Swords", "rest, recovery", "restlessness"],
+          ["Five of Swords", "a hollow victory", "reconciliation"],
+          ["Six of Swords", "transition, passage", "an unfinished move"],
+          ["Seven of Swords", "deception, stealth", "coming clean"],
+          ["Eight of Swords", "restriction, self-made traps", "release"],
+          ["Nine of Swords", "anxiety, sleeplessness", "hope returning"],
+          ["Ten of Swords", "rock bottom, an ending", "recovery begins"],
+          ["Page of Swords", "vigilance, curiosity", "gossip"],
+          ["Knight of Swords", "a charge, ambition", "recklessness"],
+          ["Queen of Swords", "perception, honesty", "coldness"],
+          ["King of Swords", "intellect, judgment", "tyranny"],
+          ["Ace of Pentacles", "opportunity, prosperity", "a missed chance"],
+          ["Two of Pentacles", "juggling, adaptability", "overwhelm"],
+          ["Three of Pentacles", "craft, teamwork", "poor workmanship"],
+          ["Four of Pentacles", "holding on, security", "greed"],
+          ["Five of Pentacles", "hardship, left out in the cold", "recovery"],
+          ["Six of Pentacles", "generosity, fair exchange", "strings attached"],
+          ["Seven of Pentacles", "patience, the long view", "impatience"],
+          ["Eight of Pentacles", "diligence, practice", "perfectionism"],
+          ["Nine of Pentacles", "self-sufficiency, comfort", "overwork"],
+          ["Ten of Pentacles", "legacy, wealth", "family trouble"],
+          ["Page of Pentacles", "study, a plan", "procrastination"],
+          ["Knight of Pentacles", "steady work", "boredom"],
+          ["Queen of Pentacles", "nurture, practicality", "self-neglect"],
+          ["King of Pentacles", "abundance, security", "stubbornness"],
+        ];
+
+        const SPREADS = {
+          1: [""],
+          3: ["past", "present", "future"],
+          5: ["present", "challenge", "root", "recent past", "near future"],
+        };
+
+        function caption([title, upright, reversed], flipped, head) {
+          const name = flipped ? `${title}, reversed` : title;
+          return (
+            (head ? `<span class="label">${esc(head)}:</span> ` : "") +
+            `<span class="bright">${esc(name)}</span>\n  ${esc(flipped ? reversed : upright)}`
+          );
+        }
+
+        /* The date seeds the pick. Everyone sees the same card until
+           midnight. */
+        function cardOfDay() {
+          const now = new Date();
+          let hash = 2166136261;
+          for (const ch of `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`) {
+            hash = Math.imul(hash ^ ch.charCodeAt(0), 16777619) >>> 0;
+          }
+          return caption(DECK[hash % DECK.length], (hash >>> 16) & 1, "Card of the day");
+        }
+
+        function draw(spec) {
+          if (!spec.trim()) return cardOfDay();
+          const count = parseInt(spec, 10);
+          if (!/^\d+$/.test(spec.trim()) || count < 1 || count > 10) {
+            return "draw: how many cards? Try draw 3.";
+          }
+          const deck = [...DECK];
+          for (let i = deck.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [deck[i], deck[j]] = [deck[j], deck[i]];
+          }
+          const heads = SPREADS[count] || Array.from({ length: count }, (_, i) => String(i + 1));
+          return heads.map((head, i) => caption(deck[i], Math.random() < 0.5, head)).join("\n");
+        }
+
         /* ---- odds and ends --------------------------------------------- */
 
         const FORTUNES = [
@@ -780,6 +905,14 @@
             "NAME\n    roll - throw dice\n\n" +
             "SYNOPSIS\n    roll [count]d[sides][+/-modifier]\n\n" +
             "EXAMPLES\n    roll 3d6\n    roll d20\n    roll 2d8+3",
+          draw:
+            "NAME\n    draw - turn over tarot cards\n\n" +
+            "SYNOPSIS\n    draw\n    draw &lt;count&gt;\n\n" +
+            "DESCRIPTION\n    With no count you get the card of the day. Everyone sees\n" +
+            "    the same card until midnight. draw 3 and draw 5 lay a\n" +
+            "    spread and name each position.\n\n" +
+            "SOURCE\n    The Rider-Waite-Smith deck. The meanings are condensed\n" +
+            "    from A. E. Waite's The Pictorial Key to the Tarot (1910).",
           merlin:
             "NAME\n    merlin - the only account on this system\n\n" +
             "DESCRIPTION\n    Not in the sudoers file. Do not ask.",
@@ -800,6 +933,8 @@
               ["cast <cantrip>", "gravity, light, mend"],
               ["roll 3d6", "throw dice, any spec"],
               ["fortune", "table wisdom, one line"],
+              ["draw", "the card of the day"],
+              ["draw 3", "past, present, future"],
               ["links", "where else to find us"],
               ["man <topic>", "read the manual"],
               ["clear", "wipe the scrollback"],
@@ -880,6 +1015,8 @@
           roll: (args) => roll(args || "d20"),
 
           fortune: () => pick(FORTUNES),
+
+          draw: (args) => draw(args),
 
           links: () =>
             table([
@@ -981,6 +1118,7 @@
             cd: cwd === "~" ? ["spells"] : [".."],
             spells: SPELLS.map(([tool]) => tool),
             cast: Object.keys(CANTRIPS),
+            draw: ["3", "5"],
             man: Object.keys(MANUALS),
           }[words[0].toLowerCase()] || [];
         }
