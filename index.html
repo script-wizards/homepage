@@ -876,6 +876,150 @@
           return heads.map((head, i) => caption(deck[i], Math.random() < 0.5, head)).join("\n");
         }
 
+        /* ---- the sky --------------------------------------------------- */
+
+        /* Ported from Athanor's sky.py. Sunrise and sunset follow the Almanac
+           for Computers (1990). It can be a minute or two out. Past the
+           polar circles it gives up. */
+        const CHALDEAN = ["Saturn", "Jupiter", "Mars", "Sun", "Venus", "Mercury", "Moon"];
+        /* Sunday first, to match Date.getDay(). */
+        const DAY_RULER = [3, 6, 2, 5, 1, 4, 0];
+        const TRUMPS = { Mercury: 1, Moon: 2, Venus: 3, Jupiter: 10, Mars: 16, Sun: 19, Saturn: 21 };
+        const PHASES = [
+          "new",
+          "waxing crescent",
+          "first quarter",
+          "waxing gibbous",
+          "full",
+          "waning gibbous",
+          "last quarter",
+          "waning crescent",
+        ];
+        const SYNODIC_MONTH = 29.530588853;
+        const NEW_MOON_EPOCH = Date.UTC(2000, 0, 6, 18, 14);
+        const HOUR = 3600000;
+        const DAY = 24 * HOUR;
+
+        /* Set by `hour here` and kept only in this page's memory. */
+        let place = null;
+
+        const mod = (a, n) => ((a % n) + n) % n;
+        const rad = (d) => (d * Math.PI) / 180;
+        const deg = (r) => (r * 180) / Math.PI;
+        const article = (planet) => (planet === "Sun" || planet === "Moon" ? `the ${planet}` : planet);
+        const midnight = (d, shift = 0) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + shift);
+        const dayKey = (d) => d.getFullYear() * 10000 + d.getMonth() * 100 + d.getDate();
+
+        function sunEvent(day, [lat, lon], rising) {
+          const utcMidnight = Date.UTC(day.getFullYear(), day.getMonth(), day.getDate());
+          const yearDay = Math.round((utcMidnight - Date.UTC(day.getFullYear(), 0, 0)) / DAY);
+          const lngHour = lon / 15;
+          const t = yearDay + ((rising ? 6 : 18) - lngHour) / 24;
+          const m = 0.9856 * t - 3.289;
+          const trueLon = mod(m + 1.916 * Math.sin(rad(m)) + 0.02 * Math.sin(rad(2 * m)) + 282.634, 360);
+          let ra = mod(deg(Math.atan(0.91764 * Math.tan(rad(trueLon)))), 360);
+          ra = (ra + Math.floor(trueLon / 90) * 90 - Math.floor(ra / 90) * 90) / 15;
+          const sinDec = 0.39782 * Math.sin(rad(trueLon));
+          const cosDec = Math.cos(Math.asin(sinDec));
+          const cosH =
+            (Math.cos(rad(90.833)) - sinDec * Math.sin(rad(lat))) / (cosDec * Math.cos(rad(lat)));
+          if (cosH < -1 || cosH > 1) return null;
+          const h = (rising ? 360 - deg(Math.acos(cosH)) : deg(Math.acos(cosH))) / 15;
+          let when = utcMidnight + mod(h + ra - 0.06571 * t - 6.622 - lngHour, 24) * HOUR;
+          /* The almanac works mod 24 hours, so the local date can come out a day off. */
+          const local = dayKey(new Date(when));
+          if (local < dayKey(day)) when += DAY;
+          if (local > dayKey(day)) when -= DAY;
+          return when;
+        }
+
+        function dayBounds(day) {
+          if (place) {
+            const rise = sunEvent(day, place, true);
+            const set = sunEvent(day, place, false);
+            if (rise !== null && set !== null) return { rise, set, guess: false };
+          }
+          return { rise: day.getTime() + 6 * HOUR, set: day.getTime() + 18 * HOUR, guess: true };
+        }
+
+        function planetaryHour(now) {
+          const today = midnight(now);
+          let { rise, set, guess } = dayBounds(today);
+          let day = today;
+          let start, end, offset;
+          if (now < rise) {
+            day = midnight(now, -1);
+            const before = dayBounds(day);
+            [start, end, offset] = [before.set, rise, 12];
+            [rise, set, guess] = [before.rise, before.set, guess || before.guess];
+          } else if (now < set) {
+            [start, end, offset] = [rise, set, 0];
+          } else {
+            const after = dayBounds(midnight(now, 1));
+            [start, end, offset] = [set, after.rise, 12];
+            guess = guess || after.guess;
+          }
+          const index = offset + Math.min(11, Math.floor((now - start) / ((end - start) / 12)));
+          const ruler = DAY_RULER[day.getDay()];
+          return { ruler: CHALDEAN[ruler], planet: CHALDEAN[(ruler + index) % 7], rise, set, guess };
+        }
+
+        const moonAge = (now) => mod((now - NEW_MOON_EPOCH) / DAY, SYNODIC_MONTH);
+        const moonPhase = (now) => PHASES[Math.floor((moonAge(now) / SYNODIC_MONTH) * 8 + 0.5) % 8];
+
+        function ordinal(n) {
+          const teen = n % 100 >= 10 && n % 100 <= 20;
+          return n + (teen ? "th" : { 1: "st", 2: "nd", 3: "rd" }[n % 10] || "th");
+        }
+
+        const clock = (ms) => new Date(ms).toTimeString().slice(0, 5);
+
+        function skyLines(now = new Date()) {
+          const hour = planetaryHour(now);
+          const weekday = now.toLocaleDateString("en-US", { weekday: "long" });
+          const month = now.toLocaleDateString("en-US", { month: "long" });
+          return {
+            date: `${weekday}, the ${ordinal(now.getDate())} of ${month}`,
+            ruler: `Day of ${article(hour.ruler)}, hour of ${article(hour.planet)}${hour.guess ? "~" : ""}`,
+            trump: `The hour's trump: ${DECK[TRUMPS[hour.planet]][0]}`,
+            moon: `Moon ${moonPhase(now)}, ${Math.round(moonAge(now))} days old`,
+            sun: hour.guess
+              ? "No place is set. The day runs 06:00 to 18:00. Try hour here."
+              : `Sunrise ${clock(hour.rise)}, sunset ${clock(hour.set)}`,
+          };
+        }
+
+        function hourText() {
+          const lines = skyLines();
+          return (
+            `<span class="bright">${esc(lines.ruler)}</span>\n${esc(lines.trump)}\n` +
+            `<span class="quiet">${esc(lines.sun)}</span>`
+          );
+        }
+
+        function locate() {
+          if (!navigator.geolocation) return "hour: this browser can't tell where you are.";
+          const slot = `where-${Date.now()}`;
+          const fill = (html) => {
+            const out = document.getElementById(slot);
+            if (out) out.outerHTML = html;
+          };
+          navigator.geolocation.getCurrentPosition(
+            ({ coords }) => {
+              place = [coords.latitude, coords.longitude];
+              fill(hourText());
+            },
+            () => fill("hour: no location came back. The hours are still a guess."),
+            { maximumAge: HOUR, timeout: 15000 }
+          );
+          return `<span id="${slot}" class="quiet">Asking your browser where you are. The answer stays on this page.</span>`;
+        }
+
+        const MOON_NOTES = {
+          full: "You are lucky! Full moon tonight.",
+          new: "Be careful! New moon tonight.",
+        };
+
         /* ---- odds and ends --------------------------------------------- */
 
         const FORTUNES = [
@@ -905,6 +1049,19 @@
             "NAME\n    roll - throw dice\n\n" +
             "SYNOPSIS\n    roll [count]d[sides][+/-modifier]\n\n" +
             "EXAMPLES\n    roll 3d6\n    roll d20\n    roll 2d8+3",
+          hour:
+            "NAME\n    hour - the planetary hour\n\n" +
+            "SYNOPSIS\n    hour\n    hour here\n\n" +
+            "DESCRIPTION\n    The day and the night each split into twelve hours. The\n" +
+            "    planets rule them in Chaldean order. Each day takes its\n" +
+            "    name from the ruler of its first hour.\n\n" +
+            "    With no place set the day runs from 06:00 to 18:00. hour\n" +
+            "    here asks your browser for your location. It never leaves\n" +
+            "    this page.",
+          sky:
+            "NAME\n    sky - today's reading\n\n" +
+            "DESCRIPTION\n    The date, the hour, the moon and the card of the day. They\n" +
+            "    are the same lines Athanor puts on its lockscreen.",
           draw:
             "NAME\n    draw - turn over tarot cards\n\n" +
             "SYNOPSIS\n    draw\n    draw &lt;count&gt;\n\n" +
@@ -933,6 +1090,9 @@
               ["cast <cantrip>", "gravity, light, mend"],
               ["roll 3d6", "throw dice, any spec"],
               ["fortune", "table wisdom, one line"],
+              ["sky", "today's hour, moon and card"],
+              ["hour", "the planetary hour"],
+              ["moon", "its phase and age"],
               ["draw", "the card of the day"],
               ["draw 3", "past, present, future"],
               ["links", "where else to find us"],
@@ -1017,6 +1177,19 @@
           fortune: () => pick(FORTUNES),
 
           draw: (args) => draw(args),
+
+          hour: (args) => (args.trim().toLowerCase() === "here" ? locate() : hourText()),
+
+          moon: () => {
+            const now = new Date();
+            const note = MOON_NOTES[moonPhase(now)];
+            return esc(skyLines(now).moon) + (note ? `\n<span class="quiet">${note}</span>` : "");
+          },
+
+          sky: () => {
+            const lines = skyLines();
+            return [esc(lines.date), `<span class="bright">${esc(lines.ruler)}</span>`, esc(lines.moon), cardOfDay()].join("\n");
+          },
 
           links: () =>
             table([
@@ -1119,6 +1292,7 @@
             spells: SPELLS.map(([tool]) => tool),
             cast: Object.keys(CANTRIPS),
             draw: ["3", "5"],
+            hour: ["here"],
             man: Object.keys(MANUALS),
           }[words[0].toLowerCase()] || [];
         }
