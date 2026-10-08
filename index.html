@@ -45,6 +45,10 @@
         --pl-dir-bg: #ffa227;
         --pl-dir-fg: #1c1b19;
 
+        /* tarot cards: the page paints the paper, the lines show through */
+        --card-paper: var(--accent);
+        --card-lines: transparent;
+
         --col: 42rem;
         --gap: 1.125rem;
         --ease: cubic-bezier(0.16, 1, 0.3, 1);
@@ -62,6 +66,8 @@
         --pl-user-fg: #3f3f3f;
         --pl-dir-bg: #ffa227;
         --pl-dir-fg: #1c1b19;
+        --card-paper: var(--bg);
+        --card-lines: var(--ink);
       }
 
       [data-theme="light"] a {
@@ -234,6 +240,48 @@
         .listing dd {
           margin: 0 0 0.5rem;
         }
+      }
+
+      /* ---- tarot ------------------------------------------------------- */
+
+      /* Each card in tarot/ is a two-color mask. Its paper is opaque and
+         its lines are clear. */
+      .reading,
+      .spread {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        gap: 0.75rem 1rem;
+      }
+
+      .spread {
+        margin: 0 0 0.5rem;
+      }
+
+      .card {
+        position: relative;
+        flex: none;
+        width: 160px;
+        height: 280px;
+        background-color: var(--card-lines);
+      }
+
+      .spread .card {
+        width: 80px;
+        height: 140px;
+      }
+
+      .card.reversed {
+        transform: rotate(180deg);
+      }
+
+      .card .art {
+        position: absolute;
+        inset: 0;
+        background-color: var(--card-paper);
+        -webkit-mask-size: 100% 100%;
+        mask-size: 100% 100%;
+        image-rendering: pixelated;
       }
 
       /* ---- links ------------------------------------------------------- */
@@ -603,8 +651,9 @@
             link("https://zine.scriptwizards.org/", "zine.scriptwizards.org") +
             ". More coming soon.",
           "colophon.txt":
-            "This page is one HTML file. There is no build step or\n" +
-            "framework, and nothing here collects your data. The type\n" +
+            "This page is one HTML file and a deck of tarot cards.\n" +
+            "There is no build step or framework, and nothing here\n" +
+            "collects your data. The type\n" +
             "is GNU Unifont, subset to the glyphs it uses. The masthead\n" +
             "is two figlet fonts traced into vectors: DOS Rebel with\n" +
             "the shadow removed, and Delta Corps Priest.",
@@ -656,9 +705,10 @@
             }
           }
 
-          const art = document.querySelector(".masthead");
-          art.classList.add("fall");
-          cells.push(art);
+          for (const art of [document.querySelector(".masthead"), ...stdout.querySelectorAll(".card")]) {
+            art.classList.add("fall");
+            cells.push(art);
+          }
           document.body.classList.add("fallen");
 
           /* Measure every character before moving any of them, so all the
@@ -844,7 +894,8 @@
           5: ["present", "challenge", "root", "recent past", "near future"],
         };
 
-        function caption([title, upright, reversed], flipped, head) {
+        function caption(index, flipped, head) {
+          const [title, upright, reversed] = DECK[index];
           const name = flipped ? `${title}, reversed` : title;
           return (
             (head ? `<span class="label">${esc(head)}:</span> ` : "") +
@@ -860,22 +911,39 @@
           for (const ch of `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`) {
             hash = Math.imul(hash ^ ch.charCodeAt(0), 16777619) >>> 0;
           }
-          return caption(DECK[hash % DECK.length], (hash >>> 16) & 1, "Card of the day");
+          return [hash % DECK.length, Boolean((hash >>> 16) & 1), "Card of the day"];
+        }
+
+        function art(index, flipped) {
+          const url = `tarot/${String(index).padStart(2, "0")}.png`;
+          return (
+            `<span class="card${flipped ? " reversed" : ""}" role="img" aria-label="${esc(DECK[index][0])}">` +
+            `<span class="art" style="-webkit-mask-image: url(${url}); mask-image: url(${url})"></span></span>`
+          );
+        }
+
+        /* One card sits beside its reading. A spread lays its cards in a
+           row above the readings. */
+        function reading(picks) {
+          const cards = picks.map(([index, flipped]) => art(index, flipped)).join("");
+          const text = picks.map((pick) => caption(...pick)).join("\n");
+          if (picks.length === 1) return `<div class="reading">${cards}<div>${text}</div></div>`;
+          return `<div class="spread">${cards}</div>${text}`;
         }
 
         function draw(spec) {
-          if (!spec.trim()) return cardOfDay();
+          if (!spec.trim()) return reading([cardOfDay()]);
           const count = parseInt(spec, 10);
           if (!/^\d+$/.test(spec.trim()) || count < 1 || count > 10) {
             return "draw: how many cards? Try draw 3.";
           }
-          const deck = [...DECK];
+          const deck = DECK.map((_, index) => index);
           for (let i = deck.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [deck[i], deck[j]] = [deck[j], deck[i]];
           }
           const heads = SPREADS[count] || Array.from({ length: count }, (_, i) => String(i + 1));
-          return heads.map((head, i) => caption(deck[i], Math.random() < 0.5, head)).join("\n");
+          return reading(heads.map((head, i) => [deck[i], Math.random() < 0.5, head]));
         }
 
         /* ---- the sky --------------------------------------------------- */
@@ -1070,8 +1138,9 @@
             "DESCRIPTION\n    With no count you get the card of the day. Everyone sees\n" +
             "    the same card until midnight. draw 3 and draw 5 lay a\n" +
             "    spread and name each position.\n\n" +
-            "SOURCE\n    The Rider-Waite-Smith deck. The meanings are condensed\n" +
-            "    from A. E. Waite's The Pictorial Key to the Tarot (1910).",
+            "SOURCE\n    Pamela Colman Smith drew the Rider-Waite-Smith deck in\n" +
+            "    1909. The meanings are condensed from A. E. Waite's The\n" +
+            "    Pictorial Key to the Tarot (1910).",
           merlin:
             "NAME\n    merlin - the only account on this system\n\n" +
             "DESCRIPTION\n    Not in the sudoers file. Do not ask.",
@@ -1189,7 +1258,7 @@
 
           sky: () => {
             const lines = skyLines();
-            return [esc(lines.date), `<span class="bright">${esc(lines.ruler)}</span>`, esc(lines.moon), cardOfDay()].join("\n");
+            return [esc(lines.date), `<span class="bright">${esc(lines.ruler)}</span>`, esc(lines.moon), caption(...cardOfDay())].join("\n");
           },
 
           links: () =>
